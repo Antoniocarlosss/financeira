@@ -266,6 +266,10 @@ nav {
   border-top-color: var(--child);
 }
 
+.metric.danger-metric {
+  border-top-color: var(--danger);
+}
+
 .metric span {
   color: var(--muted);
   font-size: 0.88rem;

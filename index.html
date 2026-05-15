@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Minha Vida Financeira</title>
-    <link rel="stylesheet" href="styles.css?v=3" />
+    <link rel="stylesheet" href="styles.css?v=4" />
   </head>
   <body>
     <main id="loginScreen" class="login-shell">
@@ -12,7 +12,7 @@
         <div>
           <p class="eyebrow">Controle financeiro familiar</p>
           <h1>Minha Vida Financeira</h1>
-          <p class="muted">Entre como administrador para cadastrar pessoas, contas e acompanhar o fechamento do mês.</p>
+          <p class="muted">Entre para acompanhar gastos, ordenados, carros, dívidas e o fechamento do mês.</p>
         </div>
 
         <form id="loginForm" class="stack">
@@ -25,7 +25,7 @@
             <input id="loginPass" type="password" autocomplete="current-password" value="admin123" required />
           </label>
           <button type="submit" class="primary">Entrar</button>
-          <p class="hint">Acesso inicial: <strong>admin</strong> / <strong>admin123</strong></p>
+          <p id="loginHint" class="hint">Acesso inicial: <strong>admin</strong> / <strong>admin123</strong></p>
           <p id="loginError" class="error" hidden>Utilizador ou senha inválidos.</p>
         </form>
       </section>
@@ -41,9 +41,11 @@
           <button class="nav-link active" data-view="dashboardView">Home</button>
           <button class="nav-link" data-view="expensesView">Gastos</button>
           <button class="nav-link" data-view="installmentsView">Parcelas</button>
+          <button class="nav-link" data-view="carsView">Carros</button>
           <button class="nav-link" data-view="savingsView">Guardado</button>
           <button class="nav-link" data-view="peopleView">Pessoas</button>
           <button class="nav-link" data-view="reportsView">Relatório</button>
+          <button class="nav-link" data-view="accessView">Acesso</button>
         </nav>
         <button id="logoutBtn" class="ghost">Sair</button>
       </aside>
@@ -65,19 +67,35 @@
           <div class="summary-grid">
             <article class="metric">
               <span>Gastos do mês</span>
-              <strong id="monthSpent">R$ 0,00</strong>
+              <strong id="monthSpent">0,00 €</strong>
+            </article>
+            <article class="metric">
+              <span>Ordenados do mês</span>
+              <strong id="monthIncome">0,00 €</strong>
+            </article>
+            <article class="metric danger-metric">
+              <span>Dívida trazida</span>
+              <strong id="monthDebt">0,00 €</strong>
             </article>
             <article class="metric">
               <span>Precisa para o próximo mês</span>
-              <strong id="nextMonthNeeded">R$ 0,00</strong>
+              <strong id="nextMonthNeeded">0,00 €</strong>
             </article>
             <article class="metric">
               <span>Guardado do casal</span>
-              <strong id="coupleSavings">R$ 0,00</strong>
+              <strong id="coupleSavings">0,00 €</strong>
             </article>
             <article class="metric child">
               <span>Guardado da filha</span>
-              <strong id="childSavings">R$ 0,00</strong>
+              <strong id="childSavings">0,00 €</strong>
+            </article>
+            <article class="metric">
+              <span>Combustível no ano</span>
+              <strong id="yearFuel">0,00 €</strong>
+            </article>
+            <article class="metric">
+              <span>Km no mês</span>
+              <strong id="monthKm">0 km</strong>
             </article>
           </div>
 
@@ -101,8 +119,8 @@
         <section id="expensesView" class="view">
           <div class="split">
             <form id="expenseForm" class="panel form-grid">
-              <h2>Novo gasto ou conta</h2>
-              <label>Descrição<input id="expenseDescription" required placeholder="Ex: Mercado, aluguel, luz" /></label>
+              <h2>Novo gasto do dia</h2>
+              <label>Descrição<input id="expenseDescription" required placeholder="Ex: Café, combustível, mercado" /></label>
               <label>Valor<input id="expenseAmount" type="number" min="0" step="0.01" required /></label>
               <label>Data<input id="expenseDate" type="date" required /></label>
               <label>Pessoa<select id="expensePerson" required></select></label>
@@ -111,6 +129,8 @@
                 <option value="casal">Conta do casal</option>
               </select></label>
               <label>Categoria<select id="expenseCategory">
+                <option>Café</option>
+                <option>Combustível</option>
                 <option>Casa</option>
                 <option>Mercado</option>
                 <option>Transporte</option>
@@ -119,6 +139,7 @@
                 <option>Lazer</option>
                 <option>Outros</option>
               </select></label>
+              <label>Carro, se for combustível<select id="expenseCar"></select></label>
               <label class="check-row"><input id="expenseRecurring" type="checkbox" /> Repetir todo mês</label>
               <button class="primary" type="submit">Adicionar gasto</button>
             </form>
@@ -158,6 +179,34 @@
           </div>
         </section>
 
+        <section id="carsView" class="view">
+          <div class="split">
+            <div class="stack">
+              <form id="carForm" class="panel form-grid">
+                <h2>Cadastrar carro</h2>
+                <label>Nome do carro<input id="carName" required placeholder="Ex: Golf, Clio, carrinha" /></label>
+                <label>Matrícula ou observação<input id="carPlate" placeholder="Opcional" /></label>
+                <button class="primary" type="submit">Cadastrar carro</button>
+              </form>
+
+              <form id="mileageForm" class="panel form-grid">
+                <h2>Km feitos no mês</h2>
+                <label>Carro<select id="mileageCar" required></select></label>
+                <label>Mês<input id="mileageMonth" type="month" required /></label>
+                <label>Quilómetros<input id="mileageKm" type="number" min="0" step="1" required /></label>
+                <button class="primary" type="submit">Salvar km</button>
+              </form>
+            </div>
+
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Carros cadastrados</h2>
+              </div>
+              <div id="carsList" class="list"></div>
+            </section>
+          </div>
+        </section>
+
         <section id="savingsView" class="view">
           <div class="split">
             <form id="savingsForm" class="panel form-grid">
@@ -185,16 +234,26 @@
 
         <section id="peopleView" class="view">
           <div class="split">
-            <form id="personForm" class="panel form-grid">
-              <h2>Cadastrar pessoa</h2>
-              <label>Nome<input id="personName" required placeholder="Ex: Julia" /></label>
-              <label>Ordenado / salário<input id="personSalary" type="number" min="0" step="0.01" required /></label>
-              <label>Perfil<select id="personRole">
-                <option value="adulto">Adulto</option>
-                <option value="filha">Filha menor</option>
-              </select></label>
-              <button class="primary" type="submit">Cadastrar</button>
-            </form>
+            <div class="stack">
+              <form id="personForm" class="panel form-grid">
+                <h2>Cadastrar pessoa</h2>
+                <label>Nome<input id="personName" required placeholder="Ex: Julia" /></label>
+                <label>Data de aniversário<input id="personBirthday" type="date" /></label>
+                <label>Perfil<select id="personRole">
+                  <option value="adulto">Adulto</option>
+                  <option value="filha">Filha menor</option>
+                </select></label>
+                <button class="primary" type="submit">Cadastrar</button>
+              </form>
+
+              <form id="salaryForm" class="panel form-grid">
+                <h2>Ordenado recebido no mês</h2>
+                <label>Pessoa<select id="salaryPerson" required></select></label>
+                <label>Mês<input id="salaryMonth" type="month" required /></label>
+                <label>Valor recebido<input id="salaryAmount" type="number" min="0" step="0.01" required /></label>
+                <button class="primary" type="submit">Salvar ordenado</button>
+              </form>
+            </div>
 
             <section class="panel">
               <div class="panel-title">
@@ -209,14 +268,33 @@
           <section class="panel report-panel">
             <div class="panel-title">
               <h2>Fechamento do mês</h2>
-              <button id="closeMonthBtn" class="primary" type="button">Gerar relatório</button>
+              <button id="closeMonthBtn" class="primary" type="button">Fechar mês</button>
             </div>
             <div id="reportOutput" class="report-output"></div>
           </section>
         </section>
+
+        <section id="accessView" class="view">
+          <div class="split">
+            <form id="accessForm" class="panel form-grid">
+              <h2>Editar meu login</h2>
+              <label>Novo utilizador<input id="accessUsername" required /></label>
+              <label>Nova senha<input id="accessPassword" type="password" required /></label>
+              <button class="primary" type="submit">Salvar login</button>
+            </form>
+
+            <form id="newUserForm" class="panel form-grid">
+              <h2>Criar outro acesso</h2>
+              <label>Utilizador<input id="newUsername" required /></label>
+              <label>Senha<input id="newPassword" type="password" required /></label>
+              <button class="primary" type="submit">Criar acesso</button>
+              <div id="usersList" class="list"></div>
+            </form>
+          </div>
+        </section>
       </section>
     </main>
 
-    <script src="app.js?v=3"></script>
+    <script src="app.js?v=4"></script>
   </body>
 </html>
