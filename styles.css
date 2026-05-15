@@ -453,6 +453,14 @@ nav {
   margin-bottom: 0;
 }
 
+.compact-notice {
+  padding: 12px;
+}
+
+.compact-notice p {
+  margin-top: 6px;
+}
+
 .report-output {
   display: grid;
   gap: 14px;

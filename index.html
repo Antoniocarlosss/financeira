@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Minha Vida Financeira</title>
-    <link rel="stylesheet" href="styles.css?v=8" />
+    <link rel="stylesheet" href="styles.css?v=10" />
   </head>
   <body>
     <main id="loginScreen" class="login-shell">
@@ -118,39 +118,78 @@
 
         <section id="expensesView" class="view">
           <div class="split">
-            <form id="expenseForm" class="panel form-grid">
-              <h2>Novo gasto do dia</h2>
-              <label>Descrição<input id="expenseDescription" required placeholder="Ex: Café, combustível, mercado" /></label>
-              <label>Valor<input id="expenseAmount" type="number" min="0" step="0.01" required /></label>
-              <label>Data<input id="expenseDate" type="date" required /></label>
-              <label>Pessoa<select id="expensePerson" required></select></label>
-              <label>Tipo de conta<select id="expenseAccountType" required>
-                <option value="individual">Individual</option>
-                <option value="casal">Conta do casal</option>
-              </select></label>
-              <label>Categoria<select id="expenseCategory">
-                <option>Café</option>
-                <option>Combustível</option>
-                <option>Casa</option>
-                <option>Mercado</option>
-                <option>Transporte</option>
-                <option>Saúde</option>
-                <option>Filha</option>
-                <option>Lazer</option>
-                <option>Outros</option>
-              </select></label>
-              <label>Carro, se for combustível<select id="expenseCar"></select></label>
-              <label class="check-row"><input id="expenseRecurring" type="checkbox" /> Repetir todo mês</label>
-              <button class="primary" type="submit">Adicionar gasto</button>
-            </form>
+            <div class="stack">
+              <form id="plannedBillForm" class="panel form-grid">
+                <h2>Conta prevista do mês</h2>
+                <div class="notice compact-notice">
+                  <strong>Use para água, energia, internet e arrendamento.</strong>
+                  <p>Coloque o valor previsto. Quando chegar a fatura, lance o valor real nos gastos.</p>
+                </div>
+                <label>Descrição<input id="plannedDescription" required placeholder="Ex: Água, energia, internet" /></label>
+                <label>Valor previsto<input id="plannedAmount" type="number" min="0" step="0.01" required /></label>
+                <label>Começa em<input id="plannedStart" type="month" required /></label>
+                <label>Categoria<select id="plannedCategory">
+                  <option>Água</option>
+                  <option>Energia</option>
+                  <option>Internet</option>
+                  <option>Arrendamento</option>
+                  <option>Casa</option>
+                  <option>Outros</option>
+                </select></label>
+                <label>Pessoa<select id="plannedPerson" required></select></label>
+                <label>Tipo de conta<select id="plannedAccountType" required>
+                  <option value="casal">Conta do casal</option>
+                  <option value="individual">Individual</option>
+                </select></label>
+                <button class="primary" type="submit">Adicionar previsão</button>
+              </form>
 
-            <section class="panel">
-              <div class="panel-title">
-                <h2>Gastos do mês</h2>
-                <button id="clearExpenses" class="danger" type="button">Limpar mês</button>
-              </div>
-              <div id="expensesList" class="list"></div>
-            </section>
+              <form id="expenseForm" class="panel form-grid">
+                <h2>Gasto real pago</h2>
+                <label>Descrição<input id="expenseDescription" required placeholder="Ex: Café, combustível, água paga" /></label>
+                <label>Valor real<input id="expenseAmount" type="number" min="0" step="0.01" required /></label>
+                <label>Data<input id="expenseDate" type="date" required /></label>
+                <label>Pessoa<select id="expensePerson" required></select></label>
+                <label>Tipo de conta<select id="expenseAccountType" required>
+                  <option value="individual">Individual</option>
+                  <option value="casal">Conta do casal</option>
+                </select></label>
+                <label>Categoria<select id="expenseCategory">
+                  <option>Café</option>
+                  <option>Combustível</option>
+                  <option>Internet</option>
+                  <option>Água</option>
+                  <option>Energia</option>
+                  <option>Arrendamento</option>
+                  <option>Casa</option>
+                  <option>Mercado</option>
+                  <option>Transporte</option>
+                  <option>Saúde</option>
+                  <option>Filha</option>
+                  <option>Lazer</option>
+                  <option>Outros</option>
+                </select></label>
+                <label>Carro, se for combustível<select id="expenseCar"></select></label>
+                <button class="primary" type="submit">Adicionar gasto real</button>
+              </form>
+            </div>
+
+            <div class="stack">
+              <section class="panel">
+                <div class="panel-title">
+                  <h2>Previsto do mês</h2>
+                </div>
+                <div id="plannedBillsList" class="list"></div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-title">
+                  <h2>Gastos pagos no mês</h2>
+                  <button id="clearExpenses" class="danger" type="button">Limpar mês</button>
+                </div>
+                <div id="expensesList" class="list"></div>
+              </section>
+            </div>
           </div>
         </section>
 
@@ -296,6 +335,6 @@
       </section>
     </main>
 
-    <script src="app.js?v=8"></script>
+    <script src="app.js?v=10"></script>
   </body>
 </html>

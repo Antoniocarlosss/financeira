@@ -460,6 +460,14 @@ nav {
   margin-bottom: 0;
 }
 
+.compact-notice {
+  padding: 12px;
+}
+
+.compact-notice p {
+  margin-top: 6px;
+}
+
 .report-output {
   display: grid;
   gap: 14px;
@@ -652,39 +660,78 @@ nav {
 
         <section id="expensesView" class="view">
           <div class="split">
-            <form id="expenseForm" class="panel form-grid">
-              <h2>Novo gasto do dia</h2>
-              <label>Descrição<input id="expenseDescription" required placeholder="Ex: Café, combustível, mercado" /></label>
-              <label>Valor<input id="expenseAmount" type="number" min="0" step="0.01" required /></label>
-              <label>Data<input id="expenseDate" type="date" required /></label>
-              <label>Pessoa<select id="expensePerson" required></select></label>
-              <label>Tipo de conta<select id="expenseAccountType" required>
-                <option value="individual">Individual</option>
-                <option value="casal">Conta do casal</option>
-              </select></label>
-              <label>Categoria<select id="expenseCategory">
-                <option>Café</option>
-                <option>Combustível</option>
-                <option>Casa</option>
-                <option>Mercado</option>
-                <option>Transporte</option>
-                <option>Saúde</option>
-                <option>Filha</option>
-                <option>Lazer</option>
-                <option>Outros</option>
-              </select></label>
-              <label>Carro, se for combustível<select id="expenseCar"></select></label>
-              <label class="check-row"><input id="expenseRecurring" type="checkbox" /> Repetir todo mês</label>
-              <button class="primary" type="submit">Adicionar gasto</button>
-            </form>
+            <div class="stack">
+              <form id="plannedBillForm" class="panel form-grid">
+                <h2>Conta prevista do mês</h2>
+                <div class="notice compact-notice">
+                  <strong>Use para água, energia, internet e arrendamento.</strong>
+                  <p>Coloque o valor previsto. Quando chegar a fatura, lance o valor real nos gastos.</p>
+                </div>
+                <label>Descrição<input id="plannedDescription" required placeholder="Ex: Água, energia, internet" /></label>
+                <label>Valor previsto<input id="plannedAmount" type="number" min="0" step="0.01" required /></label>
+                <label>Começa em<input id="plannedStart" type="month" required /></label>
+                <label>Categoria<select id="plannedCategory">
+                  <option>Água</option>
+                  <option>Energia</option>
+                  <option>Internet</option>
+                  <option>Arrendamento</option>
+                  <option>Casa</option>
+                  <option>Outros</option>
+                </select></label>
+                <label>Pessoa<select id="plannedPerson" required></select></label>
+                <label>Tipo de conta<select id="plannedAccountType" required>
+                  <option value="casal">Conta do casal</option>
+                  <option value="individual">Individual</option>
+                </select></label>
+                <button class="primary" type="submit">Adicionar previsão</button>
+              </form>
 
-            <section class="panel">
-              <div class="panel-title">
-                <h2>Gastos do mês</h2>
-                <button id="clearExpenses" class="danger" type="button">Limpar mês</button>
-              </div>
-              <div id="expensesList" class="list"></div>
-            </section>
+              <form id="expenseForm" class="panel form-grid">
+                <h2>Gasto real pago</h2>
+                <label>Descrição<input id="expenseDescription" required placeholder="Ex: Café, combustível, água paga" /></label>
+                <label>Valor real<input id="expenseAmount" type="number" min="0" step="0.01" required /></label>
+                <label>Data<input id="expenseDate" type="date" required /></label>
+                <label>Pessoa<select id="expensePerson" required></select></label>
+                <label>Tipo de conta<select id="expenseAccountType" required>
+                  <option value="individual">Individual</option>
+                  <option value="casal">Conta do casal</option>
+                </select></label>
+                <label>Categoria<select id="expenseCategory">
+                  <option>Café</option>
+                  <option>Combustível</option>
+                  <option>Internet</option>
+                  <option>Água</option>
+                  <option>Energia</option>
+                  <option>Arrendamento</option>
+                  <option>Casa</option>
+                  <option>Mercado</option>
+                  <option>Transporte</option>
+                  <option>Saúde</option>
+                  <option>Filha</option>
+                  <option>Lazer</option>
+                  <option>Outros</option>
+                </select></label>
+                <label>Carro, se for combustível<select id="expenseCar"></select></label>
+                <button class="primary" type="submit">Adicionar gasto real</button>
+              </form>
+            </div>
+
+            <div class="stack">
+              <section class="panel">
+                <div class="panel-title">
+                  <h2>Previsto do mês</h2>
+                </div>
+                <div id="plannedBillsList" class="list"></div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-title">
+                  <h2>Gastos pagos no mês</h2>
+                  <button id="clearExpenses" class="danger" type="button">Limpar mês</button>
+                </div>
+                <div id="expensesList" class="list"></div>
+              </section>
+            </div>
           </div>
         </section>
 
@@ -853,6 +900,7 @@ const seedData = {
     { id: partnerId, name: "Juliana", birthday: "", role: "adulto", salaries: {} },
     { id: childId, name: "Filha", birthday: "", role: "filha", salaries: {} },
   ],
+  plannedBills: [],
   expenses: [],
   installments: [],
   savings: { casal: 0, filha: 0 },
@@ -883,6 +931,7 @@ function loadState() {
       savings: { ...seedData.savings, ...(data.savings || {}) },
       users: data.users?.length ? data.users : cloneData(seedData.users),
       people: data.people?.length ? data.people : cloneData(seedData.people),
+      plannedBills: data.plannedBills || [],
       cars: data.cars || [],
       mileage: data.mileage || [],
       debts: data.debts || [],
@@ -1054,6 +1103,10 @@ function getMonthExpenses(month, options = {}) {
   return [...debts, ...direct, ...installments].sort((a, b) => a.date.localeCompare(b.date));
 }
 
+function getPlannedBillsForMonth(month) {
+  return state.plannedBills.filter((bill) => month >= bill.startMonth);
+}
+
 function total(items) {
   return items.reduce((sum, item) => sum + normalizeCurrency(item.amount), 0);
 }
@@ -1093,6 +1146,7 @@ function renderPeopleOptions() {
   $("#expensePerson").innerHTML = options;
   $("#installmentPerson").innerHTML = options;
   $("#salaryPerson").innerHTML = options;
+  $("#plannedPerson").innerHTML = options;
 }
 
 function renderCarOptions() {
@@ -1103,7 +1157,9 @@ function renderCarOptions() {
 
 function renderDashboard() {
   const monthExpenses = getMonthExpenses(selectedMonth);
-  const nextExpenses = getMonthExpenses(addMonths(selectedMonth, 1));
+  const nextMonth = addMonths(selectedMonth, 1);
+  const nextExpenses = getMonthExpenses(nextMonth);
+  const nextPlanned = getPlannedBillsForMonth(nextMonth);
   const income = monthIncome(selectedMonth);
   const debt = total(debtExpensesForMonth(selectedMonth));
   const year = yearFromMonth(selectedMonth);
@@ -1111,7 +1167,7 @@ function renderDashboard() {
   $("#monthSpent").textContent = money.format(total(monthExpenses));
   $("#monthIncome").textContent = money.format(income);
   $("#monthDebt").textContent = money.format(debt);
-  $("#nextMonthNeeded").textContent = money.format(total(nextExpenses));
+  $("#nextMonthNeeded").textContent = money.format(total(nextExpenses) + total(nextPlanned));
   $("#coupleSavings").textContent = money.format(state.savings.casal);
   $("#childSavings").textContent = money.format(state.savings.filha);
   $("#yearFuel").textContent = money.format(total(fuelExpensesForYear(year)));
@@ -1143,7 +1199,33 @@ function renderDashboard() {
       </div>
       <span class="item-meta">${getPerson(expense.personId)?.name || "Sem pessoa"} • ${expense.accountType === "casal" ? "Conta do casal" : "Individual"} • ${expense.category}</span>
     </article>`).join("");
-  $("#upcomingBills").innerHTML = upcoming || empty("Nenhuma conta prevista para o próximo mês.");
+  const plannedUpcoming = nextPlanned.slice(0, 8).map((bill) => `
+    <article class="item">
+      <div class="item-head">
+        <span class="item-title">${bill.description}</span>
+        <span class="item-value">${money.format(bill.amount)}</span>
+      </div>
+      <span class="item-meta">Previsto • ${getPerson(bill.personId)?.name || "Sem pessoa"} • ${bill.accountType === "casal" ? "Conta do casal" : "Individual"} • ${bill.category}</span>
+    </article>`).join("");
+  $("#upcomingBills").innerHTML = upcoming + plannedUpcoming || empty("Nenhuma conta prevista para o próximo mês.");
+}
+
+function renderPlannedBills() {
+  const rows = getPlannedBillsForMonth(selectedMonth).map((bill) => `
+    <article class="item">
+      <div class="item-head">
+        <span class="item-title">${bill.description}</span>
+        <span class="item-value">${money.format(bill.amount)}</span>
+      </div>
+      <span class="item-meta">Previsto desde ${formatMonth(bill.startMonth)} • ${getPerson(bill.personId)?.name || "Sem pessoa"} • ${bill.accountType === "casal" ? "Conta do casal" : "Individual"} • ${bill.category}</span>
+      <div class="inline-form">
+        <label>Valor real deste mês<input type="number" min="0" step="0.01" value="${bill.amount}" data-real-planned-amount="${bill.id}" /></label>
+        <button class="ghost" type="button" data-pay-planned="${bill.id}">Lançar como pago</button>
+      </div>
+      <div class="item-actions"><button class="danger" type="button" data-delete-planned="${bill.id}">Excluir previsão</button></div>
+    </article>`).join("");
+
+  $("#plannedBillsList").innerHTML = rows || empty("Nenhuma conta prevista cadastrada.");
 }
 
 function renderExpenses() {
@@ -1304,7 +1386,7 @@ function createReport(month) {
     debtIncoming: total(debtExpensesForMonth(month)),
     coupleSavings: state.savings.casal,
     childSavings: state.savings.filha,
-    nextMonthNeeded: total(getMonthExpenses(addMonths(month, 1))),
+    nextMonthNeeded: total(getMonthExpenses(addMonths(month, 1))) + total(getPlannedBillsForMonth(addMonths(month, 1))),
     fuelYearTotal: total(fuelExpensesForYear(year)),
     fuelMonthTotal: total(expensesWithoutDebts.filter((expense) => expense.category === "Combustível")),
     monthKm: kmForMonth(month),
@@ -1368,6 +1450,7 @@ function render() {
   renderPeopleOptions();
   renderCarOptions();
   renderDashboard();
+  renderPlannedBills();
   renderExpenses();
   renderInstallments();
   renderCars();
@@ -1417,6 +1500,24 @@ $("#nextMonth").addEventListener("click", () => {
 
 $("#expenseDate").valueAsDate = new Date();
 $("#installmentStart").valueAsDate = new Date();
+$("#plannedStart").value = selectedMonth;
+
+$("#plannedBillForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  state.plannedBills.push({
+    id: makeId(),
+    description: $("#plannedDescription").value.trim(),
+    amount: normalizeCurrency($("#plannedAmount").value),
+    startMonth: $("#plannedStart").value,
+    category: $("#plannedCategory").value,
+    personId: $("#plannedPerson").value,
+    accountType: $("#plannedAccountType").value,
+  });
+  saveState();
+  event.target.reset();
+  $("#plannedStart").value = selectedMonth;
+  render();
+});
 
 $("#expenseForm").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -1429,7 +1530,7 @@ $("#expenseForm").addEventListener("submit", (event) => {
     accountType: $("#expenseAccountType").value,
     category: $("#expenseCategory").value,
     carId: $("#expenseCar").value,
-    recurring: $("#expenseRecurring").checked,
+    recurring: false,
   });
   saveState();
   event.target.reset();
@@ -1588,9 +1689,37 @@ document.body.addEventListener("click", (event) => {
   const carId = event.target.dataset.deleteCar;
   const userId = event.target.dataset.deleteUser;
   const savePaidUntilId = event.target.dataset.savePaidUntil;
+  const payPlannedId = event.target.dataset.payPlanned;
+  const deletePlannedId = event.target.dataset.deletePlanned;
 
   if (expenseId) {
     state.expenses = state.expenses.filter((expense) => expense.id !== expenseId);
+    saveState();
+    render();
+  }
+
+  if (payPlannedId) {
+    const bill = state.plannedBills.find((item) => item.id === payPlannedId);
+    const amountInput = document.querySelector(`[data-real-planned-amount="${payPlannedId}"]`);
+    if (!bill || !amountInput) return;
+    state.expenses.push({
+      id: makeId(),
+      description: bill.description,
+      amount: normalizeCurrency(amountInput.value),
+      date: `${selectedMonth}-${String(new Date().getDate()).padStart(2, "0")}`,
+      personId: bill.personId,
+      accountType: bill.accountType,
+      category: bill.category,
+      carId: "",
+      recurring: false,
+      plannedBillId: bill.id,
+    });
+    saveState();
+    render();
+  }
+
+  if (deletePlannedId) {
+    state.plannedBills = state.plannedBills.filter((bill) => bill.id !== deletePlannedId);
     saveState();
     render();
   }
