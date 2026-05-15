@@ -124,6 +124,12 @@ function installmentMonths(installment) {
   return Array.from({ length: installment.total }, (_, index) => addMonths(installment.startMonth, index));
 }
 
+function installmentChargeDate(installment, month) {
+  const day = installment.startDate ? new Date(`${installment.startDate}T12:00:00`).getDate() : 5;
+  const lastDay = new Date(dateFromMonth(addMonths(month, 1)) - 1).getDate();
+  return `${month}-${String(Math.min(day, lastDay)).padStart(2, "0")}`;
+}
+
 function monthsBetweenInclusive(startMonth, endMonth) {
   const start = dateFromMonth(startMonth);
   const end = dateFromMonth(endMonth);
@@ -158,7 +164,7 @@ function getMonthExpenses(month, options = {}) {
       id: `${installment.id}-${month}`,
       description: `${installment.description} (${installmentMonths(installment).indexOf(month) + 1}/${installment.total})`,
       amount: installment.amount,
-      date: `${month}-05`,
+      date: installmentChargeDate(installment, month),
       personId: installment.personId,
       accountType: installment.accountType,
       category: "Parcelada",
@@ -297,7 +303,7 @@ function renderInstallments() {
           <span class="item-value">${money.format(installment.amount)}/mês</span>
         </div>
         <span class="item-meta">${getPerson(installment.personId)?.name || "Sem pessoa"} • ${installment.accountType === "casal" ? "Conta do casal" : "Individual"}</span>
-        <span class="item-meta">Vai de ${formatMonth(installment.startMonth)} até ${formatMonth(lastMonth)} • ${installment.total} parcela(s).</span>
+        <span class="item-meta">Vai de ${new Date(`${installment.startDate || `${installment.startMonth}-01`}T12:00:00`).toLocaleDateString("pt-PT")} até ${formatMonth(lastMonth)} • ${installment.total} parcela(s).</span>
         <span class="item-meta">Falta ${remainingTime} para acabar e ${money.format(remainingAmount)} para quitar.</span>
         <span class="item-meta">Próxima cobrança: ${formatMonth(nextMonth)}.</span>
         <div class="item-actions"><button class="danger" type="button" data-delete-installment="${installment.id}">Excluir parcelamento</button></div>
@@ -499,7 +505,7 @@ $("#nextMonth").addEventListener("click", () => {
 });
 
 $("#expenseDate").valueAsDate = new Date();
-$("#installmentStart").value = selectedMonth;
+$("#installmentStart").valueAsDate = new Date();
 
 $("#expenseForm").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -522,7 +528,8 @@ $("#expenseForm").addEventListener("submit", (event) => {
 
 $("#installmentForm").addEventListener("submit", (event) => {
   event.preventDefault();
-  const startMonth = $("#installmentStart").value;
+  const startDate = $("#installmentStart").value;
+  const startMonth = monthKey(startDate);
   const endDate = $("#installmentEnd").value;
   const endMonth = endDate ? monthKey(endDate) : "";
   const typedTotal = Number($("#installmentTotal").value || 0);
@@ -539,12 +546,13 @@ $("#installmentForm").addEventListener("submit", (event) => {
     amount: normalizeCurrency($("#installmentAmount").value),
     total: calculatedTotal,
     startMonth,
+    startDate,
     personId: $("#installmentPerson").value,
     accountType: $("#installmentAccountType").value,
   });
   saveState();
   event.target.reset();
-  $("#installmentStart").value = selectedMonth;
+  $("#installmentStart").valueAsDate = new Date();
   render();
 });
 
