@@ -336,6 +336,30 @@ nav {
   font-weight: 800;
 }
 
+.installment-card summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  cursor: pointer;
+  list-style: none;
+}
+
+.installment-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.installment-card summary::after {
+  content: "Abrir";
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 0.86rem;
+}
+
+.installment-card[open] summary::after {
+  content: "Fechar";
+}
+
 .item-value {
   font-weight: 800;
   white-space: nowrap;
@@ -350,6 +374,67 @@ nav {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.progress-track {
+  width: 100%;
+  height: 12px;
+  overflow: hidden;
+  background: #edf1ee;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+
+.progress-track span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.payment-columns h3 {
+  margin: 8px 0;
+  font-size: 0.95rem;
+}
+
+.payment-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.payment-columns ul {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.payment-columns li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  list-style: none;
+}
+
+.payment-columns li.paid {
+  background: #eef7f2;
+  color: var(--primary-dark);
+}
+
+.payment-columns li.open {
+  background: #fffaf4;
 }
 
 .check-row {
@@ -437,6 +522,14 @@ nav {
 
   nav,
   .summary-grid.compact {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-form {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-columns {
     grid-template-columns: 1fr;
   }
 
@@ -893,6 +986,28 @@ function installmentChargeDate(installment, month) {
   return `${month}-${String(Math.min(day, lastDay)).padStart(2, "0")}`;
 }
 
+function defaultPaidUntil() {
+  const current = dateFromMonth(selectedMonth);
+  current.setDate(0);
+  return current.toISOString().slice(0, 10);
+}
+
+function installmentPaidCount(installment) {
+  const months = installmentMonths(installment);
+  if (installment.paidUntil) {
+    return months.filter((month) => installmentChargeDate(installment, month) <= installment.paidUntil).length;
+  }
+  return months.filter((month) => month < selectedMonth).length;
+}
+
+function installmentPaymentRows(installment) {
+  return installmentMonths(installment).map((month, index) => {
+    const date = installmentChargeDate(installment, month);
+    const paid = installment.paidUntil ? date <= installment.paidUntil : month < selectedMonth;
+    return { number: index + 1, month, date, paid };
+  });
+}
+
 function monthsBetweenInclusive(startMonth, endMonth) {
   const start = dateFromMonth(startMonth);
   const end = dateFromMonth(endMonth);
@@ -1053,24 +1168,57 @@ function renderInstallments() {
   const rows = state.installments.map((installment) => {
     const months = installmentMonths(installment);
     const currentIndex = months.findIndex((month) => month >= selectedMonth);
-    const paidCount = months.filter((month) => month < selectedMonth).length;
+    const paidCount = installmentPaidCount(installment);
     const remaining = Math.max(installment.total - paidCount, 0);
     const lastMonth = months[months.length - 1];
     const nextMonth = months[currentIndex] || lastMonth;
     const remainingTime = remaining > 0 ? `${remaining} mês(es)` : "finalizado";
     const remainingAmount = remaining * installment.amount;
+    const initialAmount = installment.total * installment.amount;
+    const paidAmount = paidCount * installment.amount;
+    const paidPercent = installment.total ? Math.min(100, (paidCount / installment.total) * 100) : 0;
+    const remainingPercent = Math.max(0, 100 - paidPercent);
+    const allPaymentRows = installmentPaymentRows(installment);
+    const paidRows = allPaymentRows.filter((row) => row.paid).map((row) => `
+      <li class="${row.paid ? "paid" : "open"}">
+        <span>${row.number}/${installment.total} • ${new Date(`${row.date}T12:00:00`).toLocaleDateString("pt-PT")}</span>
+        <strong>${row.paid ? "Pago" : money.format(installment.amount)}</strong>
+      </li>`).join("");
+    const openRows = allPaymentRows.filter((row) => !row.paid).map((row) => `
+      <li class="open">
+        <span>${row.number}/${installment.total} • ${new Date(`${row.date}T12:00:00`).toLocaleDateString("pt-PT")}</span>
+        <strong>${money.format(installment.amount)}</strong>
+      </li>`).join("");
     return `
-      <article class="item">
-        <div class="item-head">
+      <details class="item installment-card">
+        <summary>
           <span class="item-title">${installment.description}</span>
           <span class="item-value">${money.format(installment.amount)}/mês</span>
-        </div>
+        </summary>
         <span class="item-meta">${getPerson(installment.personId)?.name || "Sem pessoa"} • ${installment.accountType === "casal" ? "Conta do casal" : "Individual"}</span>
         <span class="item-meta">Vai de ${new Date(`${installment.startDate || `${installment.startMonth}-01`}T12:00:00`).toLocaleDateString("pt-PT")} até ${formatMonth(lastMonth)} • ${installment.total} parcela(s).</span>
-        <span class="item-meta">Falta ${remainingTime} para acabar e ${money.format(remainingAmount)} para quitar.</span>
+        <span class="item-meta">Valor inicial devido: ${money.format(initialAmount)} • Pago: ${money.format(paidAmount)} • Falta: ${money.format(remainingAmount)}</span>
+        <div class="progress-track" aria-label="Progresso pago">
+          <span style="width: ${paidPercent}%"></span>
+        </div>
+        <span class="item-meta">${paidPercent.toFixed(1)}% pago • ${remainingPercent.toFixed(1)}% falta • ${remainingTime} para acabar.</span>
+        <div class="inline-form">
+          <label>Pago até<input type="date" data-paid-until-input="${installment.id}" value="${installment.paidUntil || defaultPaidUntil()}" /></label>
+          <button class="ghost" type="button" data-save-paid-until="${installment.id}">Salvar pago até</button>
+        </div>
+        <div class="payment-columns">
+          <section>
+            <h3>Parcelas pagas</h3>
+            <ul>${paidRows || "<li class=\"open\"><span>Nenhuma parcela marcada como paga.</span><strong>0</strong></li>"}</ul>
+          </section>
+          <section>
+            <h3>Parcelas em falta</h3>
+            <ul>${openRows || "<li class=\"paid\"><span>Tudo quitado.</span><strong>Pago</strong></li>"}</ul>
+          </section>
+        </div>
         <span class="item-meta">Próxima cobrança: ${formatMonth(nextMonth)}.</span>
         <div class="item-actions"><button class="danger" type="button" data-delete-installment="${installment.id}">Excluir parcelamento</button></div>
-      </article>`;
+      </details>`;
   }).join("");
 
   $("#installmentsList").innerHTML = rows || empty("Nenhuma conta parcelada cadastrada.");
@@ -1439,6 +1587,7 @@ document.body.addEventListener("click", (event) => {
   const editPersonId = event.target.dataset.editPerson;
   const carId = event.target.dataset.deleteCar;
   const userId = event.target.dataset.deleteUser;
+  const savePaidUntilId = event.target.dataset.savePaidUntil;
 
   if (expenseId) {
     state.expenses = state.expenses.filter((expense) => expense.id !== expenseId);
@@ -1448,6 +1597,14 @@ document.body.addEventListener("click", (event) => {
 
   if (installmentId) {
     state.installments = state.installments.filter((installment) => installment.id !== installmentId);
+    saveState();
+    render();
+  }
+
+  if (savePaidUntilId) {
+    const installment = state.installments.find((item) => item.id === savePaidUntilId);
+    const input = document.querySelector(`[data-paid-until-input="${savePaidUntilId}"]`);
+    installment.paidUntil = input.value;
     saveState();
     render();
   }

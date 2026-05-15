@@ -329,6 +329,30 @@ nav {
   font-weight: 800;
 }
 
+.installment-card summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  cursor: pointer;
+  list-style: none;
+}
+
+.installment-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.installment-card summary::after {
+  content: "Abrir";
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 0.86rem;
+}
+
+.installment-card[open] summary::after {
+  content: "Fechar";
+}
+
 .item-value {
   font-weight: 800;
   white-space: nowrap;
@@ -343,6 +367,67 @@ nav {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.progress-track {
+  width: 100%;
+  height: 12px;
+  overflow: hidden;
+  background: #edf1ee;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+
+.progress-track span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.payment-columns h3 {
+  margin: 8px 0;
+  font-size: 0.95rem;
+}
+
+.payment-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.payment-columns ul {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.payment-columns li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  list-style: none;
+}
+
+.payment-columns li.paid {
+  background: #eef7f2;
+  color: var(--primary-dark);
+}
+
+.payment-columns li.open {
+  background: #fffaf4;
 }
 
 .check-row {
@@ -430,6 +515,14 @@ nav {
 
   nav,
   .summary-grid.compact {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-form {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-columns {
     grid-template-columns: 1fr;
   }
 
