@@ -160,8 +160,9 @@
               <h2>Conta parcelada</h2>
               <label>Descrição<input id="installmentDescription" required placeholder="Ex: Geladeira, cartão, sofá" /></label>
               <label>Valor da parcela<input id="installmentAmount" type="number" min="0" step="0.01" required /></label>
-              <label>Total de parcelas<input id="installmentTotal" type="number" min="1" step="1" required /></label>
+              <label>Total de parcelas opcional<input id="installmentTotal" type="number" min="1" step="1" placeholder="Ex: 12" /></label>
               <label>Primeiro mês<input id="installmentStart" type="month" required /></label>
+              <label>Último mês opcional<input id="installmentEnd" type="month" /></label>
               <label>Pessoa<select id="installmentPerson" required></select></label>
               <label>Tipo de conta<select id="installmentAccountType" required>
                 <option value="individual">Individual</option>

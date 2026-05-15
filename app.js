@@ -124,6 +124,12 @@ function installmentMonths(installment) {
   return Array.from({ length: installment.total }, (_, index) => addMonths(installment.startMonth, index));
 }
 
+function monthsBetweenInclusive(startMonth, endMonth) {
+  const start = dateFromMonth(startMonth);
+  const end = dateFromMonth(endMonth);
+  return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
+}
+
 function installmentOccursInMonth(installment, month) {
   return installmentMonths(installment).includes(month);
 }
@@ -282,6 +288,8 @@ function renderInstallments() {
     const remaining = Math.max(installment.total - paidCount, 0);
     const lastMonth = months[months.length - 1];
     const nextMonth = months[currentIndex] || lastMonth;
+    const remainingTime = remaining > 0 ? `${remaining} mês(es)` : "finalizado";
+    const remainingAmount = remaining * installment.amount;
     return `
       <article class="item">
         <div class="item-head">
@@ -289,7 +297,8 @@ function renderInstallments() {
           <span class="item-value">${money.format(installment.amount)}/mês</span>
         </div>
         <span class="item-meta">${getPerson(installment.personId)?.name || "Sem pessoa"} • ${installment.accountType === "casal" ? "Conta do casal" : "Individual"}</span>
-        <span class="item-meta">Faltam ${remaining} parcela(s), ${money.format(remaining * installment.amount)} e termina em ${formatMonth(lastMonth)}.</span>
+        <span class="item-meta">Vai de ${formatMonth(installment.startMonth)} até ${formatMonth(lastMonth)} • ${installment.total} parcela(s).</span>
+        <span class="item-meta">Falta ${remainingTime} para acabar e ${money.format(remainingAmount)} para quitar.</span>
         <span class="item-meta">Próxima cobrança: ${formatMonth(nextMonth)}.</span>
         <div class="item-actions"><button class="danger" type="button" data-delete-installment="${installment.id}">Excluir parcelamento</button></div>
       </article>`;
@@ -513,12 +522,22 @@ $("#expenseForm").addEventListener("submit", (event) => {
 
 $("#installmentForm").addEventListener("submit", (event) => {
   event.preventDefault();
+  const startMonth = $("#installmentStart").value;
+  const endMonth = $("#installmentEnd").value;
+  const typedTotal = Number($("#installmentTotal").value || 0);
+  const calculatedTotal = endMonth ? monthsBetweenInclusive(startMonth, endMonth) : typedTotal;
+
+  if (!calculatedTotal || calculatedTotal < 1) {
+    alert("Informe o total de parcelas ou um último mês igual ou posterior ao primeiro mês.");
+    return;
+  }
+
   state.installments.push({
     id: makeId(),
     description: $("#installmentDescription").value.trim(),
     amount: normalizeCurrency($("#installmentAmount").value),
-    total: Number($("#installmentTotal").value),
-    startMonth: $("#installmentStart").value,
+    total: calculatedTotal,
+    startMonth,
     personId: $("#installmentPerson").value,
     accountType: $("#installmentAccountType").value,
   });
