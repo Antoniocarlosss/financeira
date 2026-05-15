@@ -118,6 +118,20 @@ function setView(viewId) {
   render();
 }
 
+function showLogin() {
+  $("#loginScreen").hidden = false;
+  $("#loginScreen").style.display = "grid";
+  $("#appScreen").hidden = true;
+  $("#appScreen").style.display = "none";
+}
+
+function showApp() {
+  $("#loginScreen").hidden = true;
+  $("#loginScreen").style.display = "none";
+  $("#appScreen").hidden = false;
+  $("#appScreen").style.display = "grid";
+}
+
 function renderPeopleOptions() {
   const options = state.people.map((person) => `<option value="${person.id}">${person.name}</option>`).join("");
   $("#expensePerson").innerHTML = options;
@@ -304,14 +318,12 @@ $("#loginForm").addEventListener("submit", (event) => {
     $("#loginError").hidden = false;
     return;
   }
-  $("#loginScreen").hidden = true;
-  $("#appScreen").hidden = false;
+  showApp();
   render();
 });
 
 $("#logoutBtn").addEventListener("click", () => {
-  $("#appScreen").hidden = true;
-  $("#loginScreen").hidden = false;
+  showLogin();
 });
 
 document.querySelectorAll(".nav-link").forEach((button) => {
