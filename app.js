@@ -66,6 +66,11 @@ function loadState() {
       role: person.role || "adulto",
       salaries: person.salaries || (person.salary ? { [monthKey(new Date())]: Number(person.salary) } : {}),
     }));
+    merged.plannedBills = merged.plannedBills.map((bill) => ({
+      dueDay: 10,
+      payments: {},
+      ...bill,
+    }));
     ensurePersonalPeople(merged);
     return merged;
   } catch {
@@ -227,6 +232,33 @@ function getPlannedBillsForMonth(month) {
   return state.plannedBills.filter((bill) => month >= bill.startMonth);
 }
 
+function plannedBillDueDate(bill, month) {
+  const dueDay = Number(bill.dueDay || 10);
+  const lastDay = new Date(dateFromMonth(addMonths(month, 1)) - 1).getDate();
+  return `${month}-${String(Math.min(dueDay, lastDay)).padStart(2, "0")}`;
+}
+
+function plannedPaymentForMonth(bill, month) {
+  return bill.payments?.[month] || null;
+}
+
+function plannedStatus(bill, month) {
+  const payment = plannedPaymentForMonth(bill, month);
+  const dueDate = plannedBillDueDate(bill, month);
+  const today = new Date().toISOString().slice(0, 10);
+  if (payment?.paidDate) {
+    return payment.paidDate > dueDate ? "Pago atrasado" : "Pago";
+  }
+  if (today > dueDate) return "Em atraso";
+  return "Próximo a vencer";
+}
+
+function upcomingPlannedBills(month) {
+  return getPlannedBillsForMonth(month)
+    .filter((bill) => !plannedPaymentForMonth(bill, month)?.paidDate)
+    .sort((a, b) => plannedBillDueDate(a, month).localeCompare(plannedBillDueDate(b, month)));
+}
+
 function total(items) {
   return items.reduce((sum, item) => sum + normalizeCurrency(item.amount), 0);
 }
@@ -280,6 +312,7 @@ function renderDashboard() {
   const nextMonth = addMonths(selectedMonth, 1);
   const nextExpenses = getMonthExpenses(nextMonth);
   const nextPlanned = getPlannedBillsForMonth(nextMonth);
+  const monthPlannedDue = upcomingPlannedBills(selectedMonth).slice(0, 5);
   const income = monthIncome(selectedMonth);
   const debt = total(debtExpensesForMonth(selectedMonth));
   const year = yearFromMonth(selectedMonth);
@@ -319,31 +352,47 @@ function renderDashboard() {
       </div>
       <span class="item-meta">${getPerson(expense.personId)?.name || "Sem pessoa"} • ${expense.accountType === "casal" ? "Conta do casal" : "Individual"} • ${expense.category}</span>
     </article>`).join("");
+  const plannedDueNow = monthPlannedDue.map((bill) => `
+    <article class="item">
+      <div class="item-head">
+        <span class="item-title">${bill.description}</span>
+        <span class="item-value">${money.format(bill.amount)}</span>
+      </div>
+      <span class="item-meta">${plannedStatus(bill, selectedMonth)} • vence em ${new Date(`${plannedBillDueDate(bill, selectedMonth)}T12:00:00`).toLocaleDateString("pt-PT")} • ${bill.category}</span>
+    </article>`).join("");
   const plannedUpcoming = nextPlanned.slice(0, 8).map((bill) => `
     <article class="item">
       <div class="item-head">
         <span class="item-title">${bill.description}</span>
         <span class="item-value">${money.format(bill.amount)}</span>
       </div>
-      <span class="item-meta">Previsto • ${getPerson(bill.personId)?.name || "Sem pessoa"} • ${bill.accountType === "casal" ? "Conta do casal" : "Individual"} • ${bill.category}</span>
+      <span class="item-meta">Previsto próximo mês • vence em ${new Date(`${plannedBillDueDate(bill, nextMonth)}T12:00:00`).toLocaleDateString("pt-PT")} • ${bill.category}</span>
     </article>`).join("");
-  $("#upcomingBills").innerHTML = upcoming + plannedUpcoming || empty("Nenhuma conta prevista para o próximo mês.");
+  $("#upcomingBills").innerHTML = plannedDueNow + upcoming + plannedUpcoming || empty("Nenhuma conta prevista para o próximo mês.");
 }
 
 function renderPlannedBills() {
-  const rows = getPlannedBillsForMonth(selectedMonth).map((bill) => `
-    <article class="item">
-      <div class="item-head">
-        <span class="item-title">${bill.description}</span>
-        <span class="item-value">${money.format(bill.amount)}</span>
-      </div>
-      <span class="item-meta">Previsto desde ${formatMonth(bill.startMonth)} • ${getPerson(bill.personId)?.name || "Sem pessoa"} • ${bill.accountType === "casal" ? "Conta do casal" : "Individual"} • ${bill.category}</span>
-      <div class="inline-form">
-        <label>Valor real deste mês<input type="number" min="0" step="0.01" value="${bill.amount}" data-real-planned-amount="${bill.id}" /></label>
-        <button class="ghost" type="button" data-pay-planned="${bill.id}">Lançar como pago</button>
-      </div>
-      <div class="item-actions"><button class="danger" type="button" data-delete-planned="${bill.id}">Excluir previsão</button></div>
-    </article>`).join("");
+  const rows = getPlannedBillsForMonth(selectedMonth).map((bill) => {
+    const payment = plannedPaymentForMonth(bill, selectedMonth);
+    const dueDate = plannedBillDueDate(bill, selectedMonth);
+    const status = plannedStatus(bill, selectedMonth);
+    const realAmount = payment?.amount ?? bill.amount;
+    const paidDate = payment?.paidDate || new Date().toISOString().slice(0, 10);
+    return `
+      <article class="item">
+        <div class="item-head">
+          <span class="item-title">${bill.description}</span>
+          <span class="item-value">${money.format(realAmount)}</span>
+        </div>
+        <span class="item-meta">${status} • vence em ${new Date(`${dueDate}T12:00:00`).toLocaleDateString("pt-PT")} • previsto desde ${formatMonth(bill.startMonth)} • ${getPerson(bill.personId)?.name || "Sem pessoa"} • ${bill.accountType === "casal" ? "Conta do casal" : "Individual"} • ${bill.category}</span>
+        <div class="inline-form">
+          <label>Valor real deste mês<input type="number" min="0" step="0.01" value="${realAmount}" data-real-planned-amount="${bill.id}" /></label>
+          <label>Data que pagou<input type="date" value="${paidDate}" data-real-planned-date="${bill.id}" /></label>
+          <button class="ghost" type="button" data-pay-planned="${bill.id}">Salvar pagamento</button>
+        </div>
+        <div class="item-actions"><button class="danger" type="button" data-delete-planned="${bill.id}">Excluir previsão</button></div>
+      </article>`;
+  }).join("");
 
   $("#plannedBillsList").innerHTML = rows || empty("Nenhuma conta prevista cadastrada.");
 }
@@ -629,9 +678,11 @@ $("#plannedBillForm").addEventListener("submit", (event) => {
     description: $("#plannedDescription").value.trim(),
     amount: normalizeCurrency($("#plannedAmount").value),
     startMonth: $("#plannedStart").value,
+    dueDay: Number($("#plannedDueDay").value),
     category: $("#plannedCategory").value,
     personId: $("#plannedPerson").value,
     accountType: $("#plannedAccountType").value,
+    payments: {},
   });
   saveState();
   event.target.reset();
@@ -821,19 +872,32 @@ document.body.addEventListener("click", (event) => {
   if (payPlannedId) {
     const bill = state.plannedBills.find((item) => item.id === payPlannedId);
     const amountInput = document.querySelector(`[data-real-planned-amount="${payPlannedId}"]`);
-    if (!bill || !amountInput) return;
-    state.expenses.push({
+    const dateInput = document.querySelector(`[data-real-planned-date="${payPlannedId}"]`);
+    if (!bill || !amountInput || !dateInput) return;
+    const amount = normalizeCurrency(amountInput.value);
+    const paidDate = dateInput.value || new Date().toISOString().slice(0, 10);
+    bill.payments = bill.payments || {};
+    bill.payments[selectedMonth] = { amount, paidDate };
+
+    const existingExpense = state.expenses.find((expense) => expense.plannedBillId === bill.id && expense.plannedForMonth === selectedMonth);
+    const expenseData = {
       id: makeId(),
       description: bill.description,
-      amount: normalizeCurrency(amountInput.value),
-      date: `${selectedMonth}-${String(new Date().getDate()).padStart(2, "0")}`,
+      amount,
+      date: paidDate,
       personId: bill.personId,
       accountType: bill.accountType,
       category: bill.category,
       carId: "",
       recurring: false,
       plannedBillId: bill.id,
-    });
+      plannedForMonth: selectedMonth,
+    };
+    if (existingExpense) {
+      Object.assign(existingExpense, { ...expenseData, id: existingExpense.id });
+    } else {
+      state.expenses.push(expenseData);
+    }
     saveState();
     render();
   }
