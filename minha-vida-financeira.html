@@ -603,7 +603,7 @@ nav {
               <label>Valor da parcela<input id="installmentAmount" type="number" min="0" step="0.01" required /></label>
               <label>Total de parcelas opcional<input id="installmentTotal" type="number" min="1" step="1" placeholder="Ex: 12" /></label>
               <label>Primeiro mês<input id="installmentStart" type="month" required /></label>
-              <label>Último mês opcional<input id="installmentEnd" type="month" /></label>
+              <label>Data da última parcela opcional<input id="installmentEnd" type="date" /></label>
               <label>Pessoa<select id="installmentPerson" required></select></label>
               <label>Tipo de conta<select id="installmentAccountType" required>
                 <option value="individual">Individual</option>
@@ -1263,7 +1263,8 @@ $("#expenseForm").addEventListener("submit", (event) => {
 $("#installmentForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const startMonth = $("#installmentStart").value;
-  const endMonth = $("#installmentEnd").value;
+  const endDate = $("#installmentEnd").value;
+  const endMonth = endDate ? monthKey(endDate) : "";
   const typedTotal = Number($("#installmentTotal").value || 0);
   const calculatedTotal = endMonth ? monthsBetweenInclusive(startMonth, endMonth) : typedTotal;
 

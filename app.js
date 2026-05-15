@@ -523,7 +523,8 @@ $("#expenseForm").addEventListener("submit", (event) => {
 $("#installmentForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const startMonth = $("#installmentStart").value;
-  const endMonth = $("#installmentEnd").value;
+  const endDate = $("#installmentEnd").value;
+  const endMonth = endDate ? monthKey(endDate) : "";
   const typedTotal = Number($("#installmentTotal").value || 0);
   const calculatedTotal = endMonth ? monthsBetweenInclusive(startMonth, endMonth) : typedTotal;
 
