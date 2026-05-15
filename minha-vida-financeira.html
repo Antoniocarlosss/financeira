@@ -750,12 +750,14 @@ function cloneData(data) {
 }
 
 const adminId = makeId();
+const partnerId = makeId();
 const childId = makeId();
 
 const seedData = {
   users: [{ id: makeId(), username: "admin", password: "admin123", role: "admin" }],
   people: [
-    { id: adminId, name: "Admin", birthday: "", role: "adulto", salaries: {} },
+    { id: adminId, name: "Antonio Carlos", birthday: "", role: "adulto", salaries: {} },
+    { id: partnerId, name: "Juliana", birthday: "", role: "adulto", salaries: {} },
     { id: childId, name: "Filha", birthday: "", role: "filha", salaries: {} },
   ],
   expenses: [],
@@ -802,9 +804,30 @@ function loadState() {
       role: person.role || "adulto",
       salaries: person.salaries || (person.salary ? { [monthKey(new Date())]: Number(person.salary) } : {}),
     }));
+    ensurePersonalPeople(merged);
     return merged;
   } catch {
     return cloneData(seedData);
+  }
+}
+
+function ensurePersonalPeople(data) {
+  const adminPerson = data.people.find((person) => person.name.toLowerCase() === "admin");
+  if (adminPerson) adminPerson.name = "Antonio Carlos";
+
+  const hasAntonio = data.people.some((person) => person.name.toLowerCase() === "antonio carlos");
+  if (!hasAntonio) {
+    data.people.unshift({ id: makeId(), name: "Antonio Carlos", birthday: "", role: "adulto", salaries: {} });
+  }
+
+  const hasJuliana = data.people.some((person) => person.name.toLowerCase() === "juliana");
+  if (!hasJuliana) {
+    data.people.push({ id: makeId(), name: "Juliana", birthday: "", role: "adulto", salaries: {} });
+  }
+
+  const hasChild = data.people.some((person) => person.role === "filha");
+  if (!hasChild) {
+    data.people.push({ id: makeId(), name: "Filha", birthday: "", role: "filha", salaries: {} });
   }
 }
 
