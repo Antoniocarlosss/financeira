@@ -40,6 +40,13 @@ const seedData = {
 };
 
 let state = loadState();
+const stateRef = doc(
+  db,
+  "familias",
+  "antonio-financeira",
+  "state",
+  "atual"
+);
 let selectedMonth = monthKey(new Date());
 let currentUserId = state.users[0]?.id || "";
 let cameraStream = null;
