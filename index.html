@@ -90,6 +90,14 @@
               <strong id="childSavings">0,00 €</strong>
             </article>
             <article class="metric">
+              <span>Saldo do casal</span>
+              <strong id="coupleBankBalance">0,00 �</strong>
+            </article>
+            <article class="metric family">
+              <span>Saldo da familia</span>
+              <strong id="familyBankBalance">0,00 �</strong>
+            </article>
+            <article class="metric">
               <span>Combustível no ano</span>
               <strong id="yearFuel">0,00 €</strong>
             </article>
@@ -249,30 +257,28 @@
         </section>
 
         <section id="savingsView" class="view">
-          <div class="split">
-            <form id="savingsForm" class="panel form-grid">
-              <h2>Atualizar guardado</h2>
-              <label>Conta<select id="savingsOwner">
-                <option value="casal">Casal</option>
-                <option value="filha">Filha menor</option>
-              </select></label>
-              <label>Valor guardado<input id="savingsAmount" type="number" min="0" step="0.01" required /></label>
-              <button class="primary" type="submit">Salvar valor</button>
+          <div class="split savings-layout">
+            <form id="savingsForm" class="panel form-grid balance-form">
+              <h2>Saldos no banco</h2>
+              <label>Saldo do Antonio Carlos<input id="bankAntonio" type="number" min="0" step="0.01" /></label>
+              <label>Saldo da Juliana<input id="bankJuliana" type="number" min="0" step="0.01" /></label>
+              <label>Saldo da Melissa<input id="bankMelissa" type="number" min="0" step="0.01" /></label>
+              <label>Saldo do casal<input id="bankCasal" type="number" min="0" step="0.01" /></label>
+              <button class="primary" type="submit">Salvar saldos</button>
             </form>
 
-            <section class="panel">
+            <section class="panel balance-panel">
               <div class="panel-title">
-                <h2>Separação do dinheiro</h2>
+                <h2>Visao da familia</h2>
               </div>
-              <div class="notice">
-                <strong>O dinheiro da filha fica separado.</strong>
-                <p>Ele aparece no painel, mas não entra nas contas do casal nem no cálculo de dinheiro disponível para pagar despesas.</p>
+              <div class="notice compact-notice">
+                <strong>O saldo da familia soma Antonio, Juliana, Melissa e casal.</strong>
+                <p>Use estes valores para ver rapidamente o dinheiro no banco, sem misturar com despesas do mes.</p>
               </div>
-              <div id="savingsBreakdown" class="summary-grid compact"></div>
+              <div id="savingsBreakdown" class="summary-grid compact balance-grid"></div>
             </section>
           </div>
         </section>
-
         <section id="peopleView" class="view">
           <div class="split">
             <div class="stack">

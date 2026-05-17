@@ -266,6 +266,10 @@ nav {
   border-top-color: var(--child);
 }
 
+.metric.family {
+  border-top-color: var(--accent);
+}
+
 .metric.danger-metric {
   border-top-color: var(--danger);
 }
@@ -329,6 +333,21 @@ nav {
   font-weight: 800;
 }
 
+.payment-card {
+  gap: 10px;
+}
+
+.payment-card .item-head {
+  align-items: flex-start;
+}
+
+.value-stack {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  text-align: right;
+}
+
 .installment-card summary {
   display: flex;
   justify-content: space-between;
@@ -389,6 +408,11 @@ nav {
   background: #fffaf4;
 }
 
+.status-pill.late {
+  background: #f7e8e6;
+  color: var(--danger);
+}
+
 .status-pill.open {
   color: #8a4c13;
 }
@@ -419,6 +443,23 @@ nav {
   grid-template-columns: minmax(180px, 260px) auto;
   gap: 10px;
   align-items: end;
+}
+
+.pay-form,
+.interest-form {
+  grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) auto;
+}
+
+.interest-form {
+  grid-template-columns: minmax(150px, 220px) auto;
+}
+
+.balance-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.balance-card {
+  min-height: 104px;
 }
 
 .payment-columns h3 {
@@ -562,6 +603,12 @@ nav {
   }
 
   .inline-form {
+    grid-template-columns: 1fr;
+  }
+
+  .pay-form,
+  .interest-form,
+  .balance-grid {
     grid-template-columns: 1fr;
   }
 
