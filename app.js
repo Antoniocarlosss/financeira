@@ -344,6 +344,11 @@ function kmForMonth(month) {
   return state.mileage.filter((item) => item.month === month).reduce((sum, item) => sum + Number(item.km || 0), 0);
 }
 
+function kmForCarMonth(carId, month) {
+  const mileage = state.mileage.find((item) => item.carId === carId && item.month === month);
+  return Number(mileage?.km || 0);
+}
+
 function setView(viewId) {
   document.querySelectorAll(".view").forEach((view) => view.classList.remove("active-view"));
   document.querySelectorAll(".nav-link").forEach((link) => link.classList.toggle("active", link.dataset.view === viewId));
@@ -603,6 +608,24 @@ function renderCars() {
   const monthFuelTotal = total(monthFuel);
   const yearFuelTotal = total(yearFuel);
   const monthKmTotal = kmForMonth(selectedMonth);
+  const monthSummaryCards = state.cars.map((car) => {
+    const carMonthFuel = fuelExpensesForCarMonth(car.id, selectedMonth);
+    return `
+      <article class="metric car-month-card">
+        <span>${car.name}</span>
+        <strong>${kmForCarMonth(car.id, selectedMonth).toLocaleString("pt-PT")} km</strong>
+        <small>${money.format(total(carMonthFuel))} em combustível</small>
+      </article>`;
+  }).join("");
+
+  $("#carMonthSummary").innerHTML = state.cars.length ? `
+    <article class="metric car-month-card family">
+      <span>Todos os carros</span>
+      <strong>${monthKmTotal.toLocaleString("pt-PT")} km</strong>
+      <small>${money.format(monthFuelTotal)} em combustível</small>
+    </article>
+    ${monthSummaryCards}` : empty("Cadastre um carro para ver km e combustível por mês.");
+
   const summary = state.cars.length ? `
     <article class="item car-total-card">
       <div class="item-head">
@@ -612,7 +635,6 @@ function renderCars() {
       <span class="item-meta">Km no mês: ${monthKmTotal.toLocaleString("pt-PT")} km • Combustível no ano: ${money.format(yearFuelTotal)}</span>
     </article>` : "";
   const rows = state.cars.map((car) => {
-    const monthMileage = state.mileage.find((item) => item.carId === car.id && item.month === selectedMonth);
     const carMonthFuel = fuelExpensesForCarMonth(car.id, selectedMonth);
     const carYearFuel = total(yearFuel.filter((expense) => expense.carId === car.id));
     const history = carMonthFuel
@@ -628,7 +650,7 @@ function renderCars() {
       <article class="item">
         <div class="item-head">
           <span class="item-title">${car.name}</span>
-          <span class="item-value">${Number(monthMileage?.km || 0).toLocaleString("pt-PT")} km</span>
+          <span class="item-value">${kmForCarMonth(car.id, selectedMonth).toLocaleString("pt-PT")} km</span>
         </div>
         <span class="item-meta">${car.plate || "Sem matrícula"} • Combustível no mês: ${money.format(total(carMonthFuel))} • Combustível no ano: ${money.format(carYearFuel)}</span>
         <div class="fuel-history">

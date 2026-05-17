@@ -462,6 +462,23 @@ nav {
   min-height: 104px;
 }
 
+.car-month-panel {
+  margin-bottom: 18px;
+}
+
+.car-month-grid {
+  margin-bottom: 0;
+}
+
+.car-month-card {
+  min-height: 126px;
+}
+
+.car-month-card small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .payment-columns h3 {
   margin: 8px 0;
   font-size: 0.95rem;
@@ -634,6 +651,10 @@ nav {
   nav,
   .summary-grid.compact {
     grid-template-columns: 1fr;
+  }
+
+  .car-month-card {
+    min-height: 108px;
   }
 
   .inline-form {

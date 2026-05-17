@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Financeira" />
-    <link rel="stylesheet" href="styles.css?v=12" />
+    <link rel="stylesheet" href="styles.css?v=13" />
   </head>
   <body>
     <main id="loginScreen" class="login-shell">
@@ -241,6 +241,13 @@
         </section>
 
         <section id="carsView" class="view">
+          <section class="panel car-month-panel">
+            <div class="panel-title">
+              <h2>Resumo do mês por carro</h2>
+            </div>
+            <div id="carMonthSummary" class="summary-grid compact car-month-grid"></div>
+          </section>
+
           <div class="split">
             <div class="stack">
               <form id="carForm" class="panel form-grid">
@@ -368,7 +375,7 @@
       </section>
     </main>
 
-    <script src="app.js?v=12"></script>
+    <script src="app.js?v=13"></script>
     <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
