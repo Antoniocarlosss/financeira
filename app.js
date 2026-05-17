@@ -50,6 +50,7 @@ let firebaseDb = null;
 let remoteReady = false;
 let applyingRemoteState = false;
 let remoteSaveTimer = null;
+let unsubscribeRemote = null;
 let syncStatusText = "Firebase ainda não conectado.";
 
 const money = new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" });
@@ -189,6 +190,7 @@ async function saveRemoteState() {
     await remoteRef().set({
       state: cloneData(state),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAtMs: Date.now(),
     }, { merge: true });
     setSyncStatus("Dados salvos no Firebase.");
   } catch (error) {
@@ -228,6 +230,29 @@ async function forceDownloadFirebase() {
   }
 }
 
+function listenRemoteState() {
+  if (!ensureFirebaseDb() || unsubscribeRemote) return;
+
+  unsubscribeRemote = remoteRef().onSnapshot((nextSnapshot) => {
+    if (!nextSnapshot.exists || nextSnapshot.metadata.hasPendingWrites || !nextSnapshot.data()?.state) return;
+    const remoteState = normalizeState(nextSnapshot.data().state);
+    if (stateScore(state) > stateScore(remoteState)) {
+      queueRemoteSave();
+      return;
+    }
+    applyingRemoteState = true;
+    state = remoteState;
+    currentUserId = state.users.find((user) => user.id === currentUserId)?.id || state.users[0]?.id || "";
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    applyingRemoteState = false;
+    setSyncStatus("Dados sincronizados automaticamente.");
+    render();
+  }, (error) => {
+    setSyncStatus("Sincronização em tempo real falhou. Verifique as regras do Firestore.");
+    console.error("Erro no listener do Firebase", error);
+  });
+}
+
 async function loadRemoteState() {
   if (!ensureFirebaseDb()) {
     setSyncStatus("Firebase não carregou. Verifique a internet.");
@@ -261,21 +286,7 @@ async function loadRemoteState() {
       await saveRemoteState();
     }
 
-    ref.onSnapshot((nextSnapshot) => {
-      if (!nextSnapshot.exists || nextSnapshot.metadata.hasPendingWrites || !nextSnapshot.data()?.state) return;
-      const remoteState = normalizeState(nextSnapshot.data().state);
-      if (stateScore(state) > stateScore(remoteState)) {
-        queueRemoteSave();
-        return;
-      }
-      applyingRemoteState = true;
-      state = remoteState;
-      currentUserId = state.users.find((user) => user.id === currentUserId)?.id || state.users[0]?.id || "";
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      applyingRemoteState = false;
-      setSyncStatus("Dados sincronizados com Firebase.");
-      render();
-    });
+    listenRemoteState();
   } catch (error) {
     remoteReady = false;
     applyingRemoteState = false;
