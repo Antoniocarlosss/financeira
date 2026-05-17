@@ -332,6 +332,14 @@ function fuelExpensesForYear(year) {
   return state.expenses.filter((expense) => monthKey(expense.date).startsWith(year) && expense.category === "Combustível");
 }
 
+function fuelExpensesForMonth(month) {
+  return state.expenses.filter((expense) => monthKey(expense.date) === month && expense.category === "Combustível");
+}
+
+function fuelExpensesForCarMonth(carId, month) {
+  return fuelExpensesForMonth(month).filter((expense) => expense.carId === carId);
+}
+
 function kmForMonth(month) {
   return state.mileage.filter((item) => item.month === month).reduce((sum, item) => sum + Number(item.km || 0), 0);
 }
@@ -364,12 +372,14 @@ function renderPeopleOptions() {
   $("#installmentPerson").innerHTML = options;
   $("#salaryPerson").innerHTML = options;
   $("#plannedPerson").innerHTML = options;
+  $("#fuelPerson").innerHTML = options;
 }
 
 function renderCarOptions() {
   const carOptions = state.cars.map((car) => `<option value="${car.id}">${car.name}</option>`).join("");
   $("#expenseCar").innerHTML = `<option value="">Nenhum</option>${carOptions}`;
   $("#mileageCar").innerHTML = carOptions;
+  $("#fuelCar").innerHTML = carOptions;
 }
 
 function renderDashboard() {
@@ -542,7 +552,8 @@ function renderInstallments() {
       <li class="paid">
         <span>${row.number}/${installment.total} - ${new Date(`${row.date}T12:00:00`).toLocaleDateString("pt-PT")}${row.adjustment ? ` - juros ${money.format(row.adjustment)}` : ""}</span>
         <strong>${money.format(row.amount)}</strong>
-        <button class="ghost mini-btn" type="button" data-set-installment-payment="${installment.id}" data-payment-month="${row.month}" data-payment-status="false">Em falta</button>
+        <strong class="status-pill paid">Paga</strong>
+        <button class="ghost mini-btn" type="button" data-set-installment-payment="${installment.id}" data-payment-month="${row.month}" data-payment-status="false">Desmarcar</button>
       </li>`).join("");
     const openRows = allPaymentRows.filter((row) => !row.paid).map((row) => `
       <li class="open">
@@ -586,21 +597,49 @@ function renderInstallments() {
 }
 
 function renderCars() {
+  const year = yearFromMonth(selectedMonth);
+  const monthFuel = fuelExpensesForMonth(selectedMonth);
+  const yearFuel = fuelExpensesForYear(year);
+  const monthFuelTotal = total(monthFuel);
+  const yearFuelTotal = total(yearFuel);
+  const monthKmTotal = kmForMonth(selectedMonth);
+  const summary = state.cars.length ? `
+    <article class="item car-total-card">
+      <div class="item-head">
+        <span class="item-title">Total dos carros em ${formatMonth(selectedMonth)}</span>
+        <span class="item-value">${money.format(monthFuelTotal)}</span>
+      </div>
+      <span class="item-meta">Km no mês: ${monthKmTotal.toLocaleString("pt-PT")} km • Combustível no ano: ${money.format(yearFuelTotal)}</span>
+    </article>` : "";
   const rows = state.cars.map((car) => {
     const monthMileage = state.mileage.find((item) => item.carId === car.id && item.month === selectedMonth);
-    const yearFuel = total(fuelExpensesForYear(yearFromMonth(selectedMonth)).filter((expense) => expense.carId === car.id));
+    const carMonthFuel = fuelExpensesForCarMonth(car.id, selectedMonth);
+    const carYearFuel = total(yearFuel.filter((expense) => expense.carId === car.id));
+    const history = carMonthFuel
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .map((expense) => `
+        <li>
+          <span>${new Date(`${expense.date}T12:00:00`).toLocaleDateString("pt-PT")} - ${expense.description}</span>
+          <strong>${money.format(expense.amount)}</strong>
+          <button class="danger mini-btn" type="button" data-delete-expense="${expense.id}">Excluir</button>
+        </li>`)
+      .join("");
     return `
       <article class="item">
         <div class="item-head">
           <span class="item-title">${car.name}</span>
           <span class="item-value">${Number(monthMileage?.km || 0).toLocaleString("pt-PT")} km</span>
         </div>
-        <span class="item-meta">${car.plate || "Sem matrícula"} • Combustível no ano: ${money.format(yearFuel)}</span>
+        <span class="item-meta">${car.plate || "Sem matrícula"} • Combustível no mês: ${money.format(total(carMonthFuel))} • Combustível no ano: ${money.format(carYearFuel)}</span>
+        <div class="fuel-history">
+          <h3>Histórico de abastecimento do mês</h3>
+          <ul>${history || "<li><span>Nenhum abastecimento neste mês.</span><strong>0,00 €</strong></li>"}</ul>
+        </div>
         <div class="item-actions"><button class="danger" type="button" data-delete-car="${car.id}">Excluir carro</button></div>
       </article>`;
   }).join("");
 
-  $("#carsList").innerHTML = rows || empty("Cadastre um carro para lançar km e ligar gastos de combustível.");
+  $("#carsList").innerHTML = summary + rows || empty("Cadastre um carro para lançar km e ligar gastos de combustível.");
 }
 
 function renderSavings() {
@@ -785,6 +824,7 @@ $("#nextMonth").addEventListener("click", () => {
 });
 
 $("#expenseDate").valueAsDate = new Date();
+$("#fuelDate").valueAsDate = new Date();
 $("#installmentStart").valueAsDate = new Date();
 $("#plannedStart").value = selectedMonth;
 
@@ -882,6 +922,26 @@ $("#mileageForm").addEventListener("submit", (event) => {
   }
   saveState();
   event.target.reset();
+  render();
+});
+
+$("#fuelForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const car = getCar($("#fuelCar").value);
+  state.expenses.push({
+    id: makeId(),
+    description: $("#fuelDescription").value.trim() || `Abastecimento - ${car?.name || "Carro"}`,
+    amount: normalizeCurrency($("#fuelAmount").value),
+    date: $("#fuelDate").value,
+    personId: $("#fuelPerson").value,
+    accountType: $("#fuelAccountType").value,
+    category: "Combustível",
+    carId: $("#fuelCar").value,
+    recurring: false,
+  });
+  saveState();
+  event.target.reset();
+  $("#fuelDate").valueAsDate = new Date();
   render();
 });
 

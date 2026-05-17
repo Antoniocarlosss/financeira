@@ -506,6 +506,40 @@ nav {
   background: #fffaf4;
 }
 
+.car-total-card {
+  background: #eef7f2;
+}
+
+.fuel-history {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.fuel-history h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.fuel-history ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.fuel-history li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  list-style: none;
+  background: #fff;
+}
+
 .check-row {
   display: flex;
   align-items: center;
@@ -613,6 +647,10 @@ nav {
   }
 
   .payment-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .fuel-history li {
     grid-template-columns: 1fr;
   }
 
