@@ -1,3 +1,11 @@
+import { db } from "./firebase-config.js";
+
+import {
+  doc,
+  setDoc,
+  getDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 const STORAGE_KEY = "minha-vida-financeira-v2";
 const OLD_STORAGE_KEY = "minha-vida-financeira-v1";
 
