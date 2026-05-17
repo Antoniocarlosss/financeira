@@ -1,0 +1,2088 @@
+<!doctype html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Minha Vida Financeira</title>
+    <style>
+:root {
+  color-scheme: light;
+  --bg: #f5f7f4;
+  --surface: #ffffff;
+  --surface-strong: #eef3ee;
+  --ink: #17201b;
+  --muted: #647067;
+  --line: #dce4dd;
+  --primary: #216b57;
+  --primary-dark: #164b3d;
+  --accent: #bf6f38;
+  --danger: #b3261e;
+  --child: #3b63a3;
+  --shadow: 0 18px 45px rgba(23, 32, 27, 0.09);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(rgba(245, 247, 244, 0.86), rgba(245, 247, 244, 0.86)),
+    url("https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1800&q=80") center/cover;
+}
+
+.login-panel {
+  width: min(920px, 100%);
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 32px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 36px;
+}
+
+.login-panel h1,
+.topbar h1,
+.sidebar h2 {
+  margin: 0;
+}
+
+.login-panel h1 {
+  font-size: clamp(2.1rem, 4vw, 4rem);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.76rem;
+  letter-spacing: 0;
+}
+
+.muted,
+.hint {
+  color: var(--muted);
+}
+
+.stack,
+.form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  padding: 0 12px;
+}
+
+input:focus,
+select:focus {
+  outline: 3px solid rgba(33, 107, 87, 0.16);
+  border-color: var(--primary);
+}
+
+.primary,
+.ghost,
+.danger,
+.nav-link,
+.icon-btn {
+  border: 0;
+  border-radius: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  font-weight: 700;
+}
+
+.primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.primary:hover {
+  background: var(--primary-dark);
+}
+
+.ghost {
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+
+.danger {
+  background: #f7e8e6;
+  color: var(--danger);
+}
+
+.error {
+  color: var(--danger);
+  margin: 0;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background: #13231f;
+  color: #fff;
+}
+
+.sidebar .eyebrow {
+  color: #86d1bc;
+}
+
+nav {
+  display: grid;
+  gap: 8px;
+}
+
+.nav-link {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: #c9d7d0;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.sidebar .ghost {
+  margin-top: auto;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.workspace {
+  padding: 28px;
+  min-width: 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.month-control {
+  display: grid;
+  grid-template-columns: 42px minmax(150px, 180px) 42px;
+  gap: 8px;
+  align-items: center;
+}
+
+.icon-btn {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 1.35rem;
+}
+
+.view {
+  display: none;
+}
+
+.active-view {
+  display: block;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.summary-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.metric,
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.metric {
+  padding: 18px;
+  min-height: 112px;
+  display: grid;
+  align-content: space-between;
+  border-top: 4px solid var(--primary);
+}
+
+.metric.child {
+  border-top-color: var(--child);
+}
+
+.metric.family {
+  border-top-color: var(--accent);
+}
+
+.metric.danger-metric {
+  border-top-color: var(--danger);
+}
+
+.metric span {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.metric strong {
+  font-size: clamp(1.25rem, 2vw, 1.85rem);
+}
+
+.two-column,
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.panel {
+  padding: 18px;
+}
+
+.panel-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+}
+
+.item {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfb;
+}
+
+.item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.item-title {
+  font-weight: 800;
+}
+
+.payment-card {
+  gap: 10px;
+}
+
+.payment-card .item-head {
+  align-items: flex-start;
+}
+
+.value-stack {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  text-align: right;
+}
+
+.installment-card summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  cursor: pointer;
+  list-style: none;
+}
+
+.installment-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.installment-card summary::after {
+  content: "Abrir";
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 0.86rem;
+}
+
+.installment-card[open] summary::after {
+  content: "Fechar";
+}
+
+.item-value {
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.item-meta {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  margin-left: 6px;
+}
+
+.status-pill.paid {
+  background: #eef7f2;
+  color: var(--primary-dark);
+}
+
+.status-pill.open,
+.unpaid-installment {
+  background: #fffaf4;
+}
+
+.status-pill.late {
+  background: #f7e8e6;
+  color: var(--danger);
+}
+
+.status-pill.open {
+  color: #8a4c13;
+}
+
+.mini-btn {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 0.82rem;
+}
+
+.progress-track {
+  width: 100%;
+  height: 12px;
+  overflow: hidden;
+  background: #edf1ee;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+
+.progress-track span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.pay-form,
+.interest-form {
+  grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) auto;
+}
+
+.interest-form {
+  grid-template-columns: minmax(150px, 220px) auto;
+}
+
+.balance-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.balance-card {
+  min-height: 104px;
+}
+
+.payment-columns h3 {
+  margin: 8px 0;
+  font-size: 0.95rem;
+}
+
+.payment-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.payment-columns ul {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.payment-columns li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  list-style: none;
+}
+
+.payment-columns li span {
+  flex: 1;
+}
+
+.payment-columns li.paid {
+  background: #eef7f2;
+  color: var(--primary-dark);
+}
+
+.payment-columns li.open {
+  background: #fffaf4;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.check-row input {
+  width: auto;
+  min-height: auto;
+}
+
+.notice {
+  padding: 14px;
+  background: #eef4fb;
+  border: 1px solid #cfddec;
+  border-radius: 8px;
+  color: #1d3558;
+}
+
+.notice p {
+  margin-bottom: 0;
+}
+
+.compact-notice {
+  padding: 12px;
+}
+
+.compact-notice p {
+  margin-top: 6px;
+}
+
+.report-output {
+  display: grid;
+  gap: 14px;
+}
+
+.report-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfcfb;
+}
+
+.report-card h3 {
+  margin: 0 0 8px;
+}
+
+.empty {
+  color: var(--muted);
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+}
+
+@media (max-width: 980px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+  }
+
+  nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .topbar,
+  .panel-title {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .summary-grid,
+  .two-column,
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .login-panel {
+    grid-template-columns: 1fr;
+    padding: 24px;
+  }
+
+  .workspace {
+    padding: 18px;
+  }
+
+  nav,
+  .summary-grid.compact {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-form {
+    grid-template-columns: 1fr;
+  }
+
+  .pay-form,
+  .interest-form,
+  .balance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .month-control {
+    grid-template-columns: 38px 1fr 38px;
+  }
+}
+
+    </style>
+  </head>
+  <body>
+    <main id="loginScreen" class="login-shell">
+      <section class="login-panel">
+        <div>
+          <p class="eyebrow">Controle financeiro familiar</p>
+          <h1>Minha Vida Financeira</h1>
+          <p class="muted">Entre para acompanhar gastos, ordenados, carros, dívidas e o fechamento do mês.</p>
+        </div>
+
+        <form id="loginForm" class="stack">
+          <label>
+            Utilizador
+            <input id="loginUser" autocomplete="username" value="admin" required />
+          </label>
+          <label>
+            Senha
+            <input id="loginPass" type="password" autocomplete="current-password" value="admin123" required />
+          </label>
+          <button type="submit" class="primary">Entrar</button>
+          <p id="loginHint" class="hint">Acesso inicial: <strong>admin</strong> / <strong>admin123</strong></p>
+          <p id="loginError" class="error" hidden>Utilizador ou senha inválidos.</p>
+        </form>
+      </section>
+    </main>
+
+    <main id="appScreen" class="app-shell" hidden style="display: none">
+      <aside class="sidebar">
+        <div>
+          <p class="eyebrow">Minha Vida Financeira</p>
+          <h2>Finanças</h2>
+        </div>
+        <nav aria-label="Navegação principal">
+          <button class="nav-link active" data-view="dashboardView">Home</button>
+          <button class="nav-link" data-view="expensesView">Gastos</button>
+          <button class="nav-link" data-view="installmentsView">Parcelas</button>
+          <button class="nav-link" data-view="carsView">Carros</button>
+          <button class="nav-link" data-view="savingsView">Guardado</button>
+          <button class="nav-link" data-view="peopleView">Pessoas</button>
+          <button class="nav-link" data-view="reportsView">Relatório</button>
+          <button class="nav-link" data-view="accessView">Acesso</button>
+        </nav>
+        <button id="logoutBtn" class="ghost">Sair</button>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p id="currentMonthLabel" class="eyebrow"></p>
+            <h1 id="viewTitle">Home</h1>
+          </div>
+          <div class="month-control">
+            <button id="prevMonth" class="icon-btn" title="Mês anterior" type="button">‹</button>
+            <input id="selectedMonth" type="month" />
+            <button id="nextMonth" class="icon-btn" title="Próximo mês" type="button">›</button>
+          </div>
+        </header>
+
+        <section id="dashboardView" class="view active-view">
+          <div class="summary-grid">
+            <article class="metric">
+              <span>Gastos do mês</span>
+              <strong id="monthSpent">0,00 €</strong>
+            </article>
+            <article class="metric">
+              <span>Ordenados do mês</span>
+              <strong id="monthIncome">0,00 €</strong>
+            </article>
+            <article class="metric danger-metric">
+              <span>Dívida trazida</span>
+              <strong id="monthDebt">0,00 €</strong>
+            </article>
+            <article class="metric">
+              <span>Precisa para o próximo mês</span>
+              <strong id="nextMonthNeeded">0,00 €</strong>
+            </article>
+            <article class="metric">
+              <span>Guardado do casal</span>
+              <strong id="coupleSavings">0,00 €</strong>
+            </article>
+            <article class="metric child">
+              <span>Guardado da filha</span>
+              <strong id="childSavings">0,00 €</strong>
+            </article>
+            <article class="metric">
+              <span>Saldo do casal</span>
+              <strong id="coupleBankBalance">0,00 �</strong>
+            </article>
+            <article class="metric family">
+              <span>Saldo da familia</span>
+              <strong id="familyBankBalance">0,00 �</strong>
+            </article>
+            <article class="metric">
+              <span>Combustível no ano</span>
+              <strong id="yearFuel">0,00 €</strong>
+            </article>
+            <article class="metric">
+              <span>Km no mês</span>
+              <strong id="monthKm">0 km</strong>
+            </article>
+          </div>
+
+          <div class="two-column">
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Resumo por pessoa</h2>
+              </div>
+              <div id="personSummary" class="list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Próximas contas</h2>
+              </div>
+              <div id="upcomingBills" class="list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="expensesView" class="view">
+          <div class="split">
+            <div class="stack">
+              <form id="plannedBillForm" class="panel form-grid">
+                <h2>Conta prevista do mês</h2>
+                <div class="notice compact-notice">
+                  <strong>Use para água, energia, internet e arrendamento.</strong>
+                  <p>Coloque o valor previsto. Quando chegar a fatura, lance o valor real nos gastos.</p>
+                </div>
+                <label>Descrição<input id="plannedDescription" required placeholder="Ex: Água, energia, internet" /></label>
+                <label>Valor previsto<input id="plannedAmount" type="number" min="0" step="0.01" required /></label>
+                <label>Começa em<input id="plannedStart" type="month" required /></label>
+                <label>Dia de vencimento<input id="plannedDueDay" type="number" min="1" max="31" step="1" value="10" required /></label>
+                <label>Categoria<select id="plannedCategory">
+                  <option>Água</option>
+                  <option>Energia</option>
+                  <option>Internet</option>
+                  <option>Arrendamento</option>
+                  <option>Casa</option>
+                  <option>Outros</option>
+                </select></label>
+                <label>Pessoa<select id="plannedPerson" required></select></label>
+                <label>Tipo de conta<select id="plannedAccountType" required>
+                  <option value="casal">Conta do casal</option>
+                  <option value="individual">Individual</option>
+                </select></label>
+                <button class="primary" type="submit">Adicionar previsão</button>
+              </form>
+
+              <form id="expenseForm" class="panel form-grid">
+                <h2>Gasto real pago</h2>
+                <label>Descrição<input id="expenseDescription" required placeholder="Ex: Café, combustível, água paga" /></label>
+                <label>Valor real<input id="expenseAmount" type="number" min="0" step="0.01" required /></label>
+                <label>Data<input id="expenseDate" type="date" required /></label>
+                <label>Pessoa<select id="expensePerson" required></select></label>
+                <label>Tipo de conta<select id="expenseAccountType" required>
+                  <option value="individual">Individual</option>
+                  <option value="casal">Conta do casal</option>
+                </select></label>
+                <label>Categoria<select id="expenseCategory">
+                  <option>Café</option>
+                  <option>Combustível</option>
+                  <option>Internet</option>
+                  <option>Água</option>
+                  <option>Energia</option>
+                  <option>Arrendamento</option>
+                  <option>Casa</option>
+                  <option>Mercado</option>
+                  <option>Transporte</option>
+                  <option>Saúde</option>
+                  <option>Filha</option>
+                  <option>Lazer</option>
+                  <option>Outros</option>
+                </select></label>
+                <label>Carro, se for combustível<select id="expenseCar"></select></label>
+                <button class="primary" type="submit">Adicionar gasto real</button>
+              </form>
+            </div>
+
+            <div class="stack">
+              <section class="panel">
+                <div class="panel-title">
+                  <h2>Previsto do mês</h2>
+                </div>
+                <div id="plannedBillsList" class="list"></div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-title">
+                  <h2>Gastos pagos no mês</h2>
+                  <button id="clearExpenses" class="danger" type="button">Limpar mês</button>
+                </div>
+                <div id="expensesList" class="list"></div>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <section id="installmentsView" class="view">
+          <div class="split">
+            <form id="installmentForm" class="panel form-grid">
+              <h2>Conta parcelada</h2>
+              <label>Descrição<input id="installmentDescription" required placeholder="Ex: Geladeira, cartão, sofá" /></label>
+              <label>Valor da parcela<input id="installmentAmount" type="number" min="0" step="0.01" required /></label>
+              <label>Total de parcelas opcional<input id="installmentTotal" type="number" min="1" step="1" placeholder="Ex: 12" /></label>
+              <label>Data da primeira parcela<input id="installmentStart" type="date" required /></label>
+              <label>Data da última parcela opcional<input id="installmentEnd" type="date" /></label>
+              <label>Pessoa<select id="installmentPerson" required></select></label>
+              <label>Tipo de conta<select id="installmentAccountType" required>
+                <option value="individual">Individual</option>
+                <option value="casal">Conta do casal</option>
+              </select></label>
+              <button class="primary" type="submit">Criar parcelas</button>
+            </form>
+
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Parcelamentos ativos</h2>
+              </div>
+              <div id="installmentsList" class="list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="carsView" class="view">
+          <div class="split">
+            <div class="stack">
+              <form id="carForm" class="panel form-grid">
+                <h2>Cadastrar carro</h2>
+                <label>Nome do carro<input id="carName" required placeholder="Ex: Golf, Clio, carrinha" /></label>
+                <label>Matrícula ou observação<input id="carPlate" placeholder="Opcional" /></label>
+                <button class="primary" type="submit">Cadastrar carro</button>
+              </form>
+
+              <form id="mileageForm" class="panel form-grid">
+                <h2>Km feitos no mês</h2>
+                <label>Carro<select id="mileageCar" required></select></label>
+                <label>Mês<input id="mileageMonth" type="month" required /></label>
+                <label>Quilómetros<input id="mileageKm" type="number" min="0" step="1" required /></label>
+                <button class="primary" type="submit">Salvar km</button>
+              </form>
+            </div>
+
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Carros cadastrados</h2>
+              </div>
+              <div id="carsList" class="list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="savingsView" class="view">
+          <div class="split savings-layout">
+            <form id="savingsForm" class="panel form-grid balance-form">
+              <h2>Saldos no banco</h2>
+              <label>Saldo do Antonio Carlos<input id="bankAntonio" type="number" min="0" step="0.01" /></label>
+              <label>Saldo da Juliana<input id="bankJuliana" type="number" min="0" step="0.01" /></label>
+              <label>Saldo da Melissa<input id="bankMelissa" type="number" min="0" step="0.01" /></label>
+              <label>Saldo do casal<input id="bankCasal" type="number" min="0" step="0.01" /></label>
+              <button class="primary" type="submit">Salvar saldos</button>
+            </form>
+
+            <section class="panel balance-panel">
+              <div class="panel-title">
+                <h2>Visao da familia</h2>
+              </div>
+              <div class="notice compact-notice">
+                <strong>O saldo da familia soma Antonio, Juliana, Melissa e casal.</strong>
+                <p>Use estes valores para ver rapidamente o dinheiro no banco, sem misturar com despesas do mes.</p>
+              </div>
+              <div id="savingsBreakdown" class="summary-grid compact balance-grid"></div>
+            </section>
+          </div>
+        </section>
+        <section id="peopleView" class="view">
+          <div class="split">
+            <div class="stack">
+              <form id="personForm" class="panel form-grid">
+                <h2>Cadastrar pessoa</h2>
+                <label>Nome<input id="personName" required placeholder="Ex: Julia" /></label>
+                <label>Data de aniversário<input id="personBirthday" type="date" /></label>
+                <label>Perfil<select id="personRole">
+                  <option value="adulto">Adulto</option>
+                  <option value="filha">Filha menor</option>
+                </select></label>
+                <button class="primary" type="submit">Cadastrar</button>
+              </form>
+
+              <form id="salaryForm" class="panel form-grid">
+                <h2>Ordenado recebido no mês</h2>
+                <label>Pessoa<select id="salaryPerson" required></select></label>
+                <label>Mês<input id="salaryMonth" type="month" required /></label>
+                <label>Valor recebido<input id="salaryAmount" type="number" min="0" step="0.01" required /></label>
+                <button class="primary" type="submit">Salvar ordenado</button>
+              </form>
+            </div>
+
+            <section class="panel">
+              <div class="panel-title">
+                <h2>Pessoas cadastradas</h2>
+              </div>
+              <div id="peopleList" class="list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="reportsView" class="view">
+          <section class="panel report-panel">
+            <div class="panel-title">
+              <h2>Fechamento do mês</h2>
+              <button id="closeMonthBtn" class="primary" type="button">Fechar mês</button>
+            </div>
+            <div id="reportOutput" class="report-output"></div>
+          </section>
+        </section>
+
+        <section id="accessView" class="view">
+          <div class="split">
+            <form id="accessForm" class="panel form-grid">
+              <h2>Editar meu login</h2>
+              <label>Novo utilizador<input id="accessUsername" required /></label>
+              <label>Nova senha<input id="accessPassword" type="password" required /></label>
+              <button class="primary" type="submit">Salvar login</button>
+            </form>
+
+            <form id="newUserForm" class="panel form-grid">
+              <h2>Criar outro acesso</h2>
+              <label>Utilizador<input id="newUsername" required /></label>
+              <label>Senha<input id="newPassword" type="password" required /></label>
+              <button class="primary" type="submit">Criar acesso</button>
+              <div id="usersList" class="list"></div>
+            </form>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+const STORAGE_KEY = "minha-vida-financeira-v2";
+const OLD_STORAGE_KEY = "minha-vida-financeira-v1";
+
+function makeId() {
+  return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function cloneData(data) {
+  return JSON.parse(JSON.stringify(data));
+}
+
+const adminId = makeId();
+const partnerId = makeId();
+const childId = makeId();
+
+const seedData = {
+  users: [{ id: makeId(), username: "admin", password: "admin123", role: "admin" }],
+  people: [
+    { id: adminId, name: "Antonio Carlos", birthday: "", role: "adulto", salaries: {} },
+    { id: partnerId, name: "Juliana", birthday: "", role: "adulto", salaries: {} },
+    { id: childId, name: "Melissa", birthday: "", role: "filha", salaries: {} },
+  ],
+  plannedBills: [],
+  expenses: [],
+  installments: [],
+  savings: { casal: 0, filha: 0 },
+  bankBalances: { antonio: 0, juliana: 0, melissa: 0, casal: 0 },
+  cars: [],
+  mileage: [],
+  debts: [],
+  reports: [],
+};
+
+let state = loadState();
+let selectedMonth = monthKey(new Date());
+let currentUserId = state.users[0]?.id || "";
+
+const money = new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" });
+const monthName = new Intl.DateTimeFormat("pt-PT", { month: "long", year: "numeric" });
+
+const $ = (selector) => document.querySelector(selector);
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(OLD_STORAGE_KEY);
+  if (!raw) return cloneData(seedData);
+
+  try {
+    const data = JSON.parse(raw);
+    const merged = {
+      ...cloneData(seedData),
+      ...data,
+      savings: { ...seedData.savings, ...(data.savings || {}) },
+      bankBalances: {
+        ...seedData.bankBalances,
+        casal: data.bankBalances?.casal ?? data.savings?.casal ?? 0,
+        melissa: data.bankBalances?.melissa ?? data.savings?.filha ?? 0,
+        ...(data.bankBalances || {}),
+      },
+      users: data.users?.length ? data.users : cloneData(seedData.users),
+      people: data.people?.length ? data.people : cloneData(seedData.people),
+      plannedBills: data.plannedBills || [],
+      cars: data.cars || [],
+      mileage: data.mileage || [],
+      debts: data.debts || [],
+      reports: data.reports || [],
+    };
+
+    merged.users = merged.users.map((user) => ({ id: user.id || makeId(), role: "admin", ...user }));
+    merged.people = merged.people.map((person) => ({
+      id: person.id || makeId(),
+      name: person.name || "Pessoa",
+      birthday: person.birthday || "",
+      role: person.role || "adulto",
+      salaries: person.salaries || (person.salary ? { [monthKey(new Date())]: Number(person.salary) } : {}),
+    }));
+    merged.plannedBills = merged.plannedBills.map((bill) => ({
+      dueDay: 10,
+      payments: {},
+      ...bill,
+    }));
+    merged.installments = (merged.installments || []).map((installment) => ({
+      payments: {},
+      adjustments: {},
+      ...installment,
+    }));
+    ensurePersonalPeople(merged);
+    return merged;
+  } catch {
+    return cloneData(seedData);
+  }
+}
+
+function ensurePersonalPeople(data) {
+  const adminPerson = data.people.find((person) => person.name.toLowerCase() === "admin");
+  if (adminPerson) adminPerson.name = "Antonio Carlos";
+
+  const hasAntonio = data.people.some((person) => person.name.toLowerCase() === "antonio carlos");
+  if (!hasAntonio) {
+    data.people.unshift({ id: makeId(), name: "Antonio Carlos", birthday: "", role: "adulto", salaries: {} });
+  }
+
+  const hasJuliana = data.people.some((person) => person.name.toLowerCase() === "juliana");
+  if (!hasJuliana) {
+    data.people.push({ id: makeId(), name: "Juliana", birthday: "", role: "adulto", salaries: {} });
+  }
+
+  const childPerson = data.people.find((person) => person.role === "filha");
+  if (childPerson && childPerson.name.toLowerCase() === "filha") childPerson.name = "Melissa";
+
+  const hasChild = data.people.some((person) => person.role === "filha");
+  if (!hasChild) {
+    data.people.push({ id: makeId(), name: "Melissa", birthday: "", role: "filha", salaries: {} });
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function monthKey(date) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function dateFromMonth(key) {
+  return new Date(`${key}-01T12:00:00`);
+}
+
+function addMonths(key, amount) {
+  const d = dateFromMonth(key);
+  d.setMonth(d.getMonth() + amount);
+  return monthKey(d);
+}
+
+function formatMonth(key) {
+  return monthName.format(dateFromMonth(key));
+}
+
+function normalizeCurrency(value) {
+  return Number(value || 0);
+}
+
+function getPerson(id) {
+  return state.people.find((person) => person.id === id);
+}
+
+function getCar(id) {
+  return state.cars.find((car) => car.id === id);
+}
+
+function salaryForPerson(person, month) {
+  return normalizeCurrency(person.salaries?.[month]);
+}
+
+function monthIncome(month) {
+  return total(state.people.filter((person) => person.role !== "filha").map((person) => ({ amount: salaryForPerson(person, month) })));
+}
+
+function yearFromMonth(month) {
+  return month.slice(0, 4);
+}
+
+function expenseOccursInMonth(expense, month) {
+  if (expense.recurring) return month >= monthKey(expense.date);
+  return monthKey(expense.date) === month;
+}
+
+function installmentMonths(installment) {
+  return Array.from({ length: installment.total }, (_, index) => addMonths(installment.startMonth, index));
+}
+
+function installmentChargeDate(installment, month) {
+  const day = installment.startDate ? new Date(`${installment.startDate}T12:00:00`).getDate() : 5;
+  const lastDay = new Date(dateFromMonth(addMonths(month, 1)) - 1).getDate();
+  return `${month}-${String(Math.min(day, lastDay)).padStart(2, "0")}`;
+}
+
+function defaultPaidUntil() {
+  const current = dateFromMonth(selectedMonth);
+  current.setDate(0);
+  return current.toISOString().slice(0, 10);
+}
+
+function installmentPaidCount(installment) {
+  const months = installmentMonths(installment);
+  return months.filter((month) => installmentIsPaid(installment, month)).length;
+}
+
+function installmentIsPaid(installment, month) {
+  if (installment.payments && Object.prototype.hasOwnProperty.call(installment.payments, month)) {
+    return Boolean(installment.payments[month]);
+  }
+  if (installment.paidUntil) {
+    return installmentChargeDate(installment, month) <= installment.paidUntil;
+  }
+  return month < selectedMonth;
+}
+
+function setInstallmentPayment(installment, month, paid) {
+  installment.payments = installment.payments || {};
+  installment.payments[month] = paid;
+}
+
+function installmentAdjustment(installment, month) {
+  return normalizeCurrency(installment.adjustments?.[month]?.amount);
+}
+
+function installmentTotalForMonth(installment, month) {
+  return normalizeCurrency(installment.amount) + installmentAdjustment(installment, month);
+}
+
+function setInstallmentAdjustment(installment, month, amount, note = "") {
+  installment.adjustments = installment.adjustments || {};
+  if (!amount && !note.trim()) {
+    delete installment.adjustments[month];
+    return;
+  }
+  installment.adjustments[month] = { amount: normalizeCurrency(amount), note: note.trim() };
+}
+
+function installmentPaymentRows(installment) {
+  return installmentMonths(installment).map((month, index) => {
+    const date = installmentChargeDate(installment, month);
+    const paid = installmentIsPaid(installment, month);
+    const adjustment = installmentAdjustment(installment, month);
+    return { number: index + 1, month, date, paid, adjustment, amount: installmentTotalForMonth(installment, month) };
+  });
+}
+
+function monthsBetweenInclusive(startMonth, endMonth) {
+  const start = dateFromMonth(startMonth);
+  const end = dateFromMonth(endMonth);
+  return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
+}
+
+function installmentOccursInMonth(installment, month) {
+  return installmentMonths(installment).includes(month);
+}
+
+function installmentExpenseForMonth(installment, month) {
+  const months = installmentMonths(installment);
+  const index = months.indexOf(month);
+  if (index === -1) return null;
+  return {
+    id: `${installment.id}-${month}`,
+    description: `${installment.description} (${index + 1}/${installment.total})`,
+    amount: installmentTotalForMonth(installment, month),
+    baseAmount: installment.amount,
+    adjustment: installmentAdjustment(installment, month),
+    date: installmentChargeDate(installment, month),
+    personId: installment.personId,
+    accountType: installment.accountType,
+    category: "Parcelada",
+    recurring: false,
+    installmentId: installment.id,
+    installmentMonth: month,
+    installmentPaid: installmentIsPaid(installment, month),
+  };
+}
+
+function installmentExpensesForMonth(month, options = {}) {
+  return state.installments
+    .filter((installment) => installmentOccursInMonth(installment, month))
+    .map((installment) => installmentExpenseForMonth(installment, month))
+    .filter((expense) => expense && (options.includeUnpaid || expense.installmentPaid));
+}
+
+function debtExpensesForMonth(month) {
+  return state.debts
+    .filter((debt) => debt.toMonth === month)
+    .map((debt) => ({
+      id: `debt-${debt.id}`,
+      description: `Dívida vinda de ${formatMonth(debt.fromMonth)}`,
+      amount: debt.amount,
+      date: `${month}-01`,
+      personId: debt.personId || state.people.find((person) => person.role !== "filha")?.id || state.people[0]?.id,
+      accountType: "casal",
+      category: "Dívida",
+      recurring: false,
+      debtId: debt.id,
+    }));
+}
+
+function getMonthExpenses(month, options = {}) {
+  const direct = state.expenses.filter((expense) => expenseOccursInMonth(expense, month));
+  const installments = installmentExpensesForMonth(month, { includeUnpaid: options.includeUnpaidInstallments });
+  const debts = options.withoutDebts ? [] : debtExpensesForMonth(month);
+
+  return [...debts, ...direct, ...installments].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function getPlannedBillsForMonth(month) {
+  return state.plannedBills.filter((bill) => month >= bill.startMonth);
+}
+
+function plannedBillDueDate(bill, month) {
+  const dueDay = Number(bill.dueDay || 10);
+  const lastDay = new Date(dateFromMonth(addMonths(month, 1)) - 1).getDate();
+  return `${month}-${String(Math.min(dueDay, lastDay)).padStart(2, "0")}`;
+}
+
+function plannedPaymentForMonth(bill, month) {
+  return bill.payments?.[month] || null;
+}
+
+function plannedStatus(bill, month) {
+  const payment = plannedPaymentForMonth(bill, month);
+  const dueDate = plannedBillDueDate(bill, month);
+  const today = new Date().toISOString().slice(0, 10);
+  if (payment?.paidDate) {
+    return payment.paidDate > dueDate ? "Pago atrasado" : "Pago";
+  }
+  if (today > dueDate) return "Em atraso";
+  return "Próximo a vencer";
+}
+
+function upcomingPlannedBills(month) {
+  return getPlannedBillsForMonth(month)
+    .filter((bill) => !plannedPaymentForMonth(bill, month)?.paidDate)
+    .sort((a, b) => plannedBillDueDate(a, month).localeCompare(plannedBillDueDate(b, month)));
+}
+
+function total(items) {
+  return items.reduce((sum, item) => sum + normalizeCurrency(item.amount), 0);
+}
+
+function familyBankBalance() {
+  return Object.values(state.bankBalances || {}).reduce((sum, value) => sum + normalizeCurrency(value), 0);
+}
+
+function fuelExpensesForYear(year) {
+  return state.expenses.filter((expense) => monthKey(expense.date).startsWith(year) && expense.category === "Combustível");
+}
+
+function kmForMonth(month) {
+  return state.mileage.filter((item) => item.month === month).reduce((sum, item) => sum + Number(item.km || 0), 0);
+}
+
+function setView(viewId) {
+  document.querySelectorAll(".view").forEach((view) => view.classList.remove("active-view"));
+  document.querySelectorAll(".nav-link").forEach((link) => link.classList.toggle("active", link.dataset.view === viewId));
+  $(`#${viewId}`).classList.add("active-view");
+  $("#viewTitle").textContent = document.querySelector(`[data-view="${viewId}"]`).textContent;
+  render();
+}
+
+function showLogin() {
+  $("#loginScreen").hidden = false;
+  $("#loginScreen").style.display = "grid";
+  $("#appScreen").hidden = true;
+  $("#appScreen").style.display = "none";
+}
+
+function showApp() {
+  $("#loginScreen").hidden = true;
+  $("#loginScreen").style.display = "none";
+  $("#appScreen").hidden = false;
+  $("#appScreen").style.display = "grid";
+}
+
+function renderPeopleOptions() {
+  const options = state.people.map((person) => `<option value="${person.id}">${person.name}</option>`).join("");
+  $("#expensePerson").innerHTML = options;
+  $("#installmentPerson").innerHTML = options;
+  $("#salaryPerson").innerHTML = options;
+  $("#plannedPerson").innerHTML = options;
+}
+
+function renderCarOptions() {
+  const carOptions = state.cars.map((car) => `<option value="${car.id}">${car.name}</option>`).join("");
+  $("#expenseCar").innerHTML = `<option value="">Nenhum</option>${carOptions}`;
+  $("#mileageCar").innerHTML = carOptions;
+}
+
+function renderDashboard() {
+  const monthExpenses = getMonthExpenses(selectedMonth);
+  const nextMonth = addMonths(selectedMonth, 1);
+  const nextExpenses = getMonthExpenses(nextMonth, { includeUnpaidInstallments: true });
+  const nextPlanned = getPlannedBillsForMonth(nextMonth);
+  const monthPlannedDue = upcomingPlannedBills(selectedMonth).slice(0, 5);
+  const income = monthIncome(selectedMonth);
+  const debt = total(debtExpensesForMonth(selectedMonth));
+  const year = yearFromMonth(selectedMonth);
+
+  $("#monthSpent").textContent = money.format(total(monthExpenses));
+  $("#monthIncome").textContent = money.format(income);
+  $("#monthDebt").textContent = money.format(debt);
+  $("#nextMonthNeeded").textContent = money.format(total(nextExpenses) + total(nextPlanned));
+  $("#coupleSavings").textContent = money.format(state.savings.casal);
+  $("#childSavings").textContent = money.format(state.savings.filha);
+  $("#coupleBankBalance").textContent = money.format(state.bankBalances.casal);
+  $("#familyBankBalance").textContent = money.format(familyBankBalance());
+  $("#yearFuel").textContent = money.format(total(fuelExpensesForYear(year)));
+  $("#monthKm").textContent = `${kmForMonth(selectedMonth).toLocaleString("pt-PT")} km`;
+
+  const personCards = state.people.map((person) => {
+    const personExpenses = monthExpenses.filter((expense) => expense.personId === person.id);
+    const individual = total(personExpenses.filter((expense) => expense.accountType === "individual"));
+    const couple = total(personExpenses.filter((expense) => expense.accountType === "casal"));
+    const salary = salaryForPerson(person, selectedMonth);
+    const balance = salary - individual;
+    return `
+      <article class="item">
+        <div class="item-head">
+          <span class="item-title">${person.name}</span>
+          <span class="item-value">${money.format(individual + couple)}</span>
+        </div>
+        <span class="item-meta">Ordenado recebido: ${money.format(salary)} • Individual: ${money.format(individual)} • Casal: ${money.format(couple)}</span>
+        <span class="item-meta">Sobra individual estimada: ${money.format(balance)}</span>
+      </article>`;
+  }).join("");
+  $("#personSummary").innerHTML = personCards || empty("Cadastre pessoas para ver o resumo.");
+
+  const upcoming = nextExpenses.slice(0, 8).map((expense) => `
+    <article class="item">
+      <div class="item-head">
+        <span class="item-title">${expense.description}</span>
+        <span class="item-value">${money.format(expense.amount)}</span>
+      </div>
+      <span class="item-meta">${getPerson(expense.personId)?.name || "Sem pessoa"} • ${expense.accountType === "casal" ? "Conta do casal" : "Individual"} • ${expense.category}</span>
+    </article>`).join("");
+  const plannedDueNow = monthPlannedDue.map((bill) => `
+    <article class="item">
+      <div class="item-head">
+        <span class="item-title">${bill.description}</span>
+        <span class="item-value">${money.format(bill.amount)}</span>
+      </div>
+      <span class="item-meta">${plannedStatus(bill, selectedMonth)} • vence em ${new Date(`${plannedBillDueDate(bill, selectedMonth)}T12:00:00`).toLocaleDateString("pt-PT")} • ${bill.category}</span>
+    </article>`).join("");
+  const plannedUpcoming = nextPlanned.slice(0, 8).map((bill) => `
+    <article class="item">
+      <div class="item-head">
+        <span class="item-title">${bill.description}</span>
+        <span class="item-value">${money.format(bill.amount)}</span>
+      </div>
+      <span class="item-meta">Previsto próximo mês • vence em ${new Date(`${plannedBillDueDate(bill, nextMonth)}T12:00:00`).toLocaleDateString("pt-PT")} • ${bill.category}</span>
+    </article>`).join("");
+  $("#upcomingBills").innerHTML = plannedDueNow + upcoming + plannedUpcoming || empty("Nenhuma conta prevista para o próximo mês.");
+}
+
+function renderPlannedBills() {
+  const rows = getPlannedBillsForMonth(selectedMonth).map((bill) => {
+    const payment = plannedPaymentForMonth(bill, selectedMonth);
+    const dueDate = plannedBillDueDate(bill, selectedMonth);
+    const status = plannedStatus(bill, selectedMonth);
+    const paid = Boolean(payment?.paidDate);
+    const statusClass = paid ? "paid" : (status === "Em atraso" ? "late" : "open");
+    const realAmount = payment?.amount ?? bill.amount;
+    const paidDate = payment?.paidDate || new Date().toISOString().slice(0, 10);
+    return `
+      <article class="item payment-card ${paid ? "paid-payment" : ""}">
+        <div class="item-head">
+          <div>
+            <span class="item-title">${bill.description}</span>
+            <span class="item-meta">${new Date(`${dueDate}T12:00:00`).toLocaleDateString("pt-PT")} - ${getPerson(bill.personId)?.name || "Sem pessoa"} - ${bill.accountType === "casal" ? "Conta do casal" : "Individual"} - ${bill.category}</span>
+          </div>
+          <div class="value-stack">
+            <span class="item-value">${money.format(realAmount)}</span>
+            <strong class="status-pill ${statusClass}">${status}</strong>
+          </div>
+        </div>
+        <span class="item-meta">Previsto desde ${formatMonth(bill.startMonth)}. Ajuste o valor real antes de marcar pago.</span>
+        <div class="inline-form pay-form">
+          <label>Valor real deste mes<input type="number" min="0" step="0.01" value="${realAmount}" data-real-planned-amount="${bill.id}" /></label>
+          <label>Data que pagou<input type="date" value="${paidDate}" data-real-planned-date="${bill.id}" /></label>
+          <button class="primary" type="button" data-pay-planned="${bill.id}">${paid ? "Atualizar pago" : "Marcar pago"}</button>
+        </div>
+        <div class="item-actions"><button class="danger" type="button" data-delete-planned="${bill.id}">Excluir previsao</button></div>
+      </article>`;
+  }).join("");
+
+  $("#plannedBillsList").innerHTML = rows || empty("Nenhuma conta prevista cadastrada.");
+}
+
+function renderExpenses() {
+  const paidExpenseRows = getMonthExpenses(selectedMonth).map((expense) => {
+    const isAutomatic = Boolean(expense.installmentId || expense.debtId);
+    const car = expense.carId ? ` - ${getCar(expense.carId)?.name || "Carro"}` : "";
+    const adjustmentText = expense.installmentId && expense.adjustment ? `<span class="item-meta">Inclui juros/mudanca: ${money.format(expense.adjustment)}</span>` : "";
+    const installmentActions = expense.installmentId ? `
+          <button class="ghost" type="button" data-set-installment-payment="${expense.installmentId}" data-payment-month="${selectedMonth}" data-payment-status="false">Marcar em falta</button>` : "";
+    return `
+      <article class="item payment-card">
+        <div class="item-head">
+          <div>
+            <span class="item-title">${expense.description}</span>
+            <span class="item-meta">${new Date(`${expense.date}T12:00:00`).toLocaleDateString("pt-PT")} - ${getPerson(expense.personId)?.name || "Sem pessoa"} - ${expense.accountType === "casal" ? "Conta do casal" : "Individual"} - ${expense.category}${car}</span>
+          </div>
+          <div class="value-stack">
+            <span class="item-value">${money.format(expense.amount)}</span>
+            ${isAutomatic ? `<strong class="status-pill paid">Pago</strong>` : ""}
+          </div>
+        </div>
+        ${adjustmentText}
+        ${isAutomatic ? `<span class="item-meta">Gerada automaticamente.</span><div class="item-actions">${installmentActions}</div>` : `<div class="item-actions"><button class="danger" type="button" data-delete-expense="${expense.id}">Excluir</button></div>`}
+      </article>`;
+  }).join("");
+  const unpaidInstallmentRows = installmentExpensesForMonth(selectedMonth, { includeUnpaid: true })
+    .filter((expense) => !expense.installmentPaid)
+    .map((expense) => `
+      <article class="item payment-card unpaid-installment">
+        <div class="item-head">
+          <div>
+            <span class="item-title">${expense.description}</span>
+            <span class="item-meta">${new Date(`${expense.date}T12:00:00`).toLocaleDateString("pt-PT")} - ${getPerson(expense.personId)?.name || "Sem pessoa"} - ${expense.accountType === "casal" ? "Conta do casal" : "Individual"} - ${expense.category}</span>
+          </div>
+          <div class="value-stack">
+            <span class="item-value">${money.format(expense.amount)}</span>
+            <strong class="status-pill open">Em falta</strong>
+          </div>
+        </div>
+        <span class="item-meta">Parcela do mes ainda nao paga. Se atrasou ou teve juros, salve a mudanca antes de marcar paga.</span>
+        <div class="inline-form interest-form">
+          <label>Juros ou mudanca<input type="number" min="0" step="0.01" value="${expense.adjustment || 0}" data-installment-adjustment="${expense.installmentId}" data-adjustment-month="${selectedMonth}" /></label>
+          <button class="ghost" type="button" data-save-installment-adjustment="${expense.installmentId}" data-adjustment-month="${selectedMonth}">Salvar mudanca</button>
+        </div>
+        <div class="item-actions">
+          <button class="primary" type="button" data-set-installment-payment="${expense.installmentId}" data-payment-month="${selectedMonth}" data-payment-status="true">Marcar paga</button>
+        </div>
+      </article>`).join("");
+  const rows = paidExpenseRows + unpaidInstallmentRows;
+
+  $("#expensesList").innerHTML = rows || empty("Nenhum gasto lancado neste mes.");
+}
+
+function renderInstallments() {
+  const rows = state.installments.map((installment) => {
+    const months = installmentMonths(installment);
+    const currentIndex = months.findIndex((month) => month >= selectedMonth);
+    const allPaymentRows = installmentPaymentRows(installment);
+    const paidCount = installmentPaidCount(installment);
+    const remaining = Math.max(installment.total - paidCount, 0);
+    const lastMonth = months[months.length - 1];
+    const nextMonth = months[currentIndex] || lastMonth;
+    const remainingTime = remaining > 0 ? `${remaining} mes(es)` : "finalizado";
+    const initialAmount = total(allPaymentRows);
+    const paidAmount = total(allPaymentRows.filter((row) => row.paid));
+    const remainingAmount = total(allPaymentRows.filter((row) => !row.paid));
+    const paidPercent = installment.total ? Math.min(100, (paidCount / installment.total) * 100) : 0;
+    const remainingPercent = Math.max(0, 100 - paidPercent);
+    const paidRows = allPaymentRows.filter((row) => row.paid).map((row) => `
+      <li class="paid">
+        <span>${row.number}/${installment.total} - ${new Date(`${row.date}T12:00:00`).toLocaleDateString("pt-PT")}${row.adjustment ? ` - juros ${money.format(row.adjustment)}` : ""}</span>
+        <strong>${money.format(row.amount)}</strong>
+        <button class="ghost mini-btn" type="button" data-set-installment-payment="${installment.id}" data-payment-month="${row.month}" data-payment-status="false">Em falta</button>
+      </li>`).join("");
+    const openRows = allPaymentRows.filter((row) => !row.paid).map((row) => `
+      <li class="open">
+        <span>${row.number}/${installment.total} - ${new Date(`${row.date}T12:00:00`).toLocaleDateString("pt-PT")}</span>
+        <strong>${money.format(row.amount)}</strong>
+        <button class="primary mini-btn" type="button" data-set-installment-payment="${installment.id}" data-payment-month="${row.month}" data-payment-status="true">Paga</button>
+      </li>`).join("");
+    return `
+      <details class="item installment-card">
+        <summary>
+          <span class="item-title">${installment.description}</span>
+          <span class="item-value">${money.format(installment.amount)}/mes</span>
+        </summary>
+        <span class="item-meta">${getPerson(installment.personId)?.name || "Sem pessoa"} - ${installment.accountType === "casal" ? "Conta do casal" : "Individual"}</span>
+        <span class="item-meta">Vai de ${new Date(`${installment.startDate || `${installment.startMonth}-01`}T12:00:00`).toLocaleDateString("pt-PT")} ate ${formatMonth(lastMonth)} - ${installment.total} parcela(s).</span>
+        <span class="item-meta">Valor total com juros: ${money.format(initialAmount)} - Pago: ${money.format(paidAmount)} - Falta: ${money.format(remainingAmount)}</span>
+        <div class="progress-track" aria-label="Progresso pago">
+          <span style="width: ${paidPercent}%"></span>
+        </div>
+        <span class="item-meta">${paidPercent.toFixed(1)}% pago - ${remainingPercent.toFixed(1)}% falta - ${remainingTime} para acabar.</span>
+        <div class="inline-form">
+          <label>Pago ate<input type="date" data-paid-until-input="${installment.id}" value="${installment.paidUntil || defaultPaidUntil()}" /></label>
+          <button class="ghost" type="button" data-save-paid-until="${installment.id}">Salvar pago ate</button>
+        </div>
+        <div class="payment-columns">
+          <section>
+            <h3>Parcelas pagas</h3>
+            <ul>${paidRows || "<li class=\"open\"><span>Nenhuma parcela marcada como paga.</span><strong>0</strong></li>"}</ul>
+          </section>
+          <section>
+            <h3>Parcelas em falta</h3>
+            <ul>${openRows || "<li class=\"paid\"><span>Tudo quitado.</span><strong>Pago</strong></li>"}</ul>
+          </section>
+        </div>
+        <span class="item-meta">Proxima cobranca: ${formatMonth(nextMonth)}.</span>
+        <div class="item-actions"><button class="danger" type="button" data-delete-installment="${installment.id}">Excluir parcelamento</button></div>
+      </details>`;
+  }).join("");
+
+  $("#installmentsList").innerHTML = rows || empty("Nenhuma conta parcelada cadastrada.");
+}
+
+function renderCars() {
+  const rows = state.cars.map((car) => {
+    const monthMileage = state.mileage.find((item) => item.carId === car.id && item.month === selectedMonth);
+    const yearFuel = total(fuelExpensesForYear(yearFromMonth(selectedMonth)).filter((expense) => expense.carId === car.id));
+    return `
+      <article class="item">
+        <div class="item-head">
+          <span class="item-title">${car.name}</span>
+          <span class="item-value">${Number(monthMileage?.km || 0).toLocaleString("pt-PT")} km</span>
+        </div>
+        <span class="item-meta">${car.plate || "Sem matrícula"} • Combustível no ano: ${money.format(yearFuel)}</span>
+        <div class="item-actions"><button class="danger" type="button" data-delete-car="${car.id}">Excluir carro</button></div>
+      </article>`;
+  }).join("");
+
+  $("#carsList").innerHTML = rows || empty("Cadastre um carro para lançar km e ligar gastos de combustível.");
+}
+
+function renderSavings() {
+  $("#bankAntonio").value = state.bankBalances.antonio || "";
+  $("#bankJuliana").value = state.bankBalances.juliana || "";
+  $("#bankMelissa").value = state.bankBalances.melissa || "";
+  $("#bankCasal").value = state.bankBalances.casal || "";
+  $("#savingsBreakdown").innerHTML = `
+    <article class="metric balance-card"><span>Antonio Carlos</span><strong>${money.format(state.bankBalances.antonio)}</strong></article>
+    <article class="metric balance-card"><span>Juliana</span><strong>${money.format(state.bankBalances.juliana)}</strong></article>
+    <article class="metric balance-card child"><span>Melissa</span><strong>${money.format(state.bankBalances.melissa)}</strong></article>
+    <article class="metric balance-card"><span>Casal</span><strong>${money.format(state.bankBalances.casal)}</strong></article>
+    <article class="metric balance-card family"><span>Familia</span><strong>${money.format(familyBankBalance())}</strong></article>
+  `;
+}
+
+function renderPeople() {
+  const rows = state.people.map((person) => {
+    const salary = salaryForPerson(person, selectedMonth);
+    const birthday = person.birthday ? new Date(`${person.birthday}T12:00:00`).toLocaleDateString("pt-PT") : "Sem aniversário";
+    return `
+      <article class="item">
+        <div class="item-head">
+          <span class="item-title">${person.name}</span>
+          <span class="item-value">${money.format(salary)}</span>
+        </div>
+        <span class="item-meta">${person.role === "filha" ? "Filha menor" : "Adulto"} • ${birthday} • Ordenado em ${formatMonth(selectedMonth)}</span>
+        <div class="item-actions">
+          <button class="ghost" type="button" data-edit-person="${person.id}">Editar pessoa</button>
+          <button class="danger" type="button" data-delete-person="${person.id}">Excluir</button>
+        </div>
+      </article>`;
+  }).join("");
+
+  $("#peopleList").innerHTML = rows || empty("Cadastre a primeira pessoa.");
+}
+
+function renderAccess() {
+  const user = state.users.find((item) => item.id === currentUserId) || state.users[0];
+  $("#accessUsername").value = user?.username || "";
+  $("#accessPassword").value = user?.password || "";
+  $("#loginHint").innerHTML = `Acesso inicial: <strong>${state.users[0]?.username || "admin"}</strong> / <strong>${state.users[0]?.password || "admin123"}</strong>`;
+  $("#usersList").innerHTML = state.users.map((item) => `
+    <article class="item">
+      <div class="item-head">
+        <span class="item-title">${item.username}</span>
+        <span class="item-value">${item.role}</span>
+      </div>
+      <div class="item-actions"><button class="danger" type="button" data-delete-user="${item.id}">Excluir acesso</button></div>
+    </article>`).join("");
+}
+
+function createReport(month) {
+  const expenses = getMonthExpenses(month);
+  const expensesWithoutDebts = getMonthExpenses(month, { withoutDebts: true });
+  const coupleExpenses = expenses.filter((expense) => expense.accountType === "casal");
+  const individualExpenses = expenses.filter((expense) => expense.accountType === "individual");
+  const salaries = monthIncome(month);
+  const balance = salaries - total(expenses);
+  const year = yearFromMonth(month);
+
+  return {
+    month,
+    totalSpent: total(expenses),
+    coupleTotal: total(coupleExpenses),
+    individualTotal: total(individualExpenses),
+    salaries,
+    balance,
+    debtIncoming: total(debtExpensesForMonth(month)),
+    coupleSavings: state.savings.casal,
+    childSavings: state.savings.filha,
+    nextMonthNeeded: total(getMonthExpenses(addMonths(month, 1), { includeUnpaidInstallments: true })) + total(getPlannedBillsForMonth(addMonths(month, 1))),
+    fuelYearTotal: total(fuelExpensesForYear(year)),
+    fuelMonthTotal: total(expensesWithoutDebts.filter((expense) => expense.category === "Combustível")),
+    monthKm: kmForMonth(month),
+    byPerson: state.people.map((person) => ({
+      name: person.name,
+      salary: salaryForPerson(person, month),
+      spent: total(expenses.filter((expense) => expense.personId === person.id)),
+    })),
+  };
+}
+
+function reportToHtml(report) {
+  const people = report.byPerson.map((person) => `<li>${person.name}: ordenado ${money.format(person.salary)}, gastos ${money.format(person.spent)}</li>`).join("");
+  const debtText = report.balance < 0
+    ? `Ficou negativo em <strong>${money.format(Math.abs(report.balance))}</strong>. Ao fechar, esse valor entra como dívida no próximo mês.`
+    : `Sobrou <strong>${money.format(report.balance)}</strong> neste fechamento.`;
+
+  return `
+    <article class="report-card">
+      <h3>${formatMonth(report.month)}</h3>
+      <p>Total gasto: <strong>${money.format(report.totalSpent)}</strong></p>
+      <p>Ordenados recebidos: <strong>${money.format(report.salaries)}</strong></p>
+      <p>Dívida trazida: <strong>${money.format(report.debtIncoming)}</strong></p>
+      <p>${debtText}</p>
+    </article>
+    <article class="report-card">
+      <h3>Contas</h3>
+      <p>Conta do casal: <strong>${money.format(report.coupleTotal)}</strong> • Contas individuais: <strong>${money.format(report.individualTotal)}</strong></p>
+      <p>Para o próximo mês, você precisa reservar <strong>${money.format(report.nextMonthNeeded)}</strong>.</p>
+    </article>
+    <article class="report-card">
+      <h3>Carro e combustível</h3>
+      <p>Combustível neste mês: <strong>${money.format(report.fuelMonthTotal)}</strong></p>
+      <p>Combustível no ano: <strong>${money.format(report.fuelYearTotal)}</strong></p>
+      <p>Km feitos neste mês: <strong>${report.monthKm.toLocaleString("pt-PT")} km</strong></p>
+    </article>
+    <article class="report-card">
+      <h3>Dinheiro guardado</h3>
+      <p>Casal: <strong>${money.format(report.coupleSavings)}</strong></p>
+      <p>Filha menor: <strong>${money.format(report.childSavings)}</strong> separado do dinheiro do casal.</p>
+    </article>
+    <article class="report-card">
+      <h3>Por pessoa</h3>
+      <ul>${people || "<li>Nenhuma pessoa cadastrada.</li>"}</ul>
+    </article>`;
+}
+
+function renderReport() {
+  $("#reportOutput").innerHTML = reportToHtml(createReport(selectedMonth));
+}
+
+function empty(text) {
+  return `<div class="empty">${text}</div>`;
+}
+
+function render() {
+  $("#selectedMonth").value = selectedMonth;
+  $("#salaryMonth").value = selectedMonth;
+  $("#mileageMonth").value = selectedMonth;
+  $("#currentMonthLabel").textContent = formatMonth(selectedMonth);
+  renderPeopleOptions();
+  renderCarOptions();
+  renderDashboard();
+  renderPlannedBills();
+  renderExpenses();
+  renderInstallments();
+  renderCars();
+  renderSavings();
+  renderPeople();
+  renderAccess();
+  if ($("#reportsView").classList.contains("active-view")) renderReport();
+}
+
+$("#loginForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const username = $("#loginUser").value.trim();
+  const password = $("#loginPass").value;
+  const user = state.users.find((item) => item.username === username && item.password === password);
+  if (!user) {
+    $("#loginError").hidden = false;
+    return;
+  }
+  currentUserId = user.id;
+  $("#loginError").hidden = true;
+  showApp();
+  render();
+});
+
+$("#logoutBtn").addEventListener("click", () => {
+  showLogin();
+});
+
+document.querySelectorAll(".nav-link").forEach((button) => {
+  button.addEventListener("click", () => setView(button.dataset.view));
+});
+
+$("#selectedMonth").addEventListener("change", (event) => {
+  selectedMonth = event.target.value || monthKey(new Date());
+  render();
+});
+
+$("#prevMonth").addEventListener("click", () => {
+  selectedMonth = addMonths(selectedMonth, -1);
+  render();
+});
+
+$("#nextMonth").addEventListener("click", () => {
+  selectedMonth = addMonths(selectedMonth, 1);
+  render();
+});
+
+$("#expenseDate").valueAsDate = new Date();
+$("#installmentStart").valueAsDate = new Date();
+$("#plannedStart").value = selectedMonth;
+
+$("#plannedBillForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  state.plannedBills.push({
+    id: makeId(),
+    description: $("#plannedDescription").value.trim(),
+    amount: normalizeCurrency($("#plannedAmount").value),
+    startMonth: $("#plannedStart").value,
+    dueDay: Number($("#plannedDueDay").value),
+    category: $("#plannedCategory").value,
+    personId: $("#plannedPerson").value,
+    accountType: $("#plannedAccountType").value,
+    payments: {},
+  });
+  saveState();
+  event.target.reset();
+  $("#plannedStart").value = selectedMonth;
+  render();
+});
+
+$("#expenseForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  state.expenses.push({
+    id: makeId(),
+    description: $("#expenseDescription").value.trim(),
+    amount: normalizeCurrency($("#expenseAmount").value),
+    date: $("#expenseDate").value,
+    personId: $("#expensePerson").value,
+    accountType: $("#expenseAccountType").value,
+    category: $("#expenseCategory").value,
+    carId: $("#expenseCar").value,
+    recurring: false,
+  });
+  saveState();
+  event.target.reset();
+  $("#expenseDate").valueAsDate = new Date();
+  render();
+});
+
+$("#installmentForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const startDate = $("#installmentStart").value;
+  const startMonth = monthKey(startDate);
+  const endDate = $("#installmentEnd").value;
+  const endMonth = endDate ? monthKey(endDate) : "";
+  const typedTotal = Number($("#installmentTotal").value || 0);
+  const calculatedTotal = endMonth ? monthsBetweenInclusive(startMonth, endMonth) : typedTotal;
+
+  if (!calculatedTotal || calculatedTotal < 1) {
+    alert("Informe o total de parcelas ou um último mês igual ou posterior ao primeiro mês.");
+    return;
+  }
+
+  state.installments.push({
+    id: makeId(),
+    description: $("#installmentDescription").value.trim(),
+    amount: normalizeCurrency($("#installmentAmount").value),
+    total: calculatedTotal,
+    startMonth,
+    startDate,
+    personId: $("#installmentPerson").value,
+    accountType: $("#installmentAccountType").value,
+    payments: {},
+    adjustments: {},
+  });
+  saveState();
+  event.target.reset();
+  $("#installmentStart").valueAsDate = new Date();
+  render();
+});
+
+$("#carForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  state.cars.push({
+    id: makeId(),
+    name: $("#carName").value.trim(),
+    plate: $("#carPlate").value.trim(),
+  });
+  saveState();
+  event.target.reset();
+  render();
+});
+
+$("#mileageForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const carId = $("#mileageCar").value;
+  const month = $("#mileageMonth").value;
+  const existing = state.mileage.find((item) => item.carId === carId && item.month === month);
+  if (existing) {
+    existing.km = Number($("#mileageKm").value);
+  } else {
+    state.mileage.push({ id: makeId(), carId, month, km: Number($("#mileageKm").value) });
+  }
+  saveState();
+  event.target.reset();
+  render();
+});
+
+$("#savingsForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  state.bankBalances.antonio = normalizeCurrency($("#bankAntonio").value);
+  state.bankBalances.juliana = normalizeCurrency($("#bankJuliana").value);
+  state.bankBalances.melissa = normalizeCurrency($("#bankMelissa").value);
+  state.bankBalances.casal = normalizeCurrency($("#bankCasal").value);
+  state.savings.casal = state.bankBalances.casal;
+  state.savings.filha = state.bankBalances.melissa;
+  saveState();
+  render();
+});
+
+$("#personForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  state.people.push({
+    id: makeId(),
+    name: $("#personName").value.trim(),
+    birthday: $("#personBirthday").value,
+    role: $("#personRole").value,
+    salaries: {},
+  });
+  saveState();
+  event.target.reset();
+  render();
+});
+
+$("#salaryForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const person = getPerson($("#salaryPerson").value);
+  person.salaries = person.salaries || {};
+  person.salaries[$("#salaryMonth").value] = normalizeCurrency($("#salaryAmount").value);
+  saveState();
+  event.target.reset();
+  render();
+});
+
+$("#accessForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const user = state.users.find((item) => item.id === currentUserId) || state.users[0];
+  user.username = $("#accessUsername").value.trim();
+  user.password = $("#accessPassword").value;
+  saveState();
+  $("#loginUser").value = user.username;
+  $("#loginPass").value = user.password;
+  render();
+});
+
+$("#newUserForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  state.users.push({
+    id: makeId(),
+    username: $("#newUsername").value.trim(),
+    password: $("#newPassword").value,
+    role: "admin",
+  });
+  saveState();
+  event.target.reset();
+  render();
+});
+
+$("#closeMonthBtn").addEventListener("click", () => {
+  const report = createReport(selectedMonth);
+  const nextMonth = addMonths(selectedMonth, 1);
+  state.reports = state.reports.filter((item) => item.month !== selectedMonth);
+  state.reports.push({ ...report, createdAt: new Date().toISOString() });
+
+  state.debts = state.debts.filter((debt) => debt.fromMonth !== selectedMonth);
+  if (report.balance < 0) {
+    state.debts.push({
+      id: makeId(),
+      fromMonth: selectedMonth,
+      toMonth: nextMonth,
+      amount: Math.abs(report.balance),
+      personId: state.people.find((person) => person.role !== "filha")?.id || state.people[0]?.id,
+    });
+  }
+
+  saveState();
+  renderReport();
+  render();
+});
+
+$("#clearExpenses").addEventListener("click", () => {
+  const confirmed = confirm(`Limpar os gastos lançados diretamente em ${formatMonth(selectedMonth)}? As parcelas e dívidas automáticas continuam.`);
+  if (!confirmed) return;
+  state.expenses = state.expenses.filter((expense) => monthKey(expense.date) !== selectedMonth);
+  saveState();
+  render();
+});
+
+document.body.addEventListener("click", (event) => {
+  const expenseId = event.target.dataset.deleteExpense;
+  const installmentId = event.target.dataset.deleteInstallment;
+  const personId = event.target.dataset.deletePerson;
+  const editPersonId = event.target.dataset.editPerson;
+  const carId = event.target.dataset.deleteCar;
+  const userId = event.target.dataset.deleteUser;
+  const savePaidUntilId = event.target.dataset.savePaidUntil;
+  const setInstallmentPaymentId = event.target.dataset.setInstallmentPayment;
+  const saveInstallmentAdjustmentId = event.target.dataset.saveInstallmentAdjustment;
+  const payPlannedId = event.target.dataset.payPlanned;
+  const deletePlannedId = event.target.dataset.deletePlanned;
+
+  if (expenseId) {
+    state.expenses = state.expenses.filter((expense) => expense.id !== expenseId);
+    saveState();
+    render();
+  }
+
+  if (payPlannedId) {
+    const bill = state.plannedBills.find((item) => item.id === payPlannedId);
+    const amountInput = document.querySelector(`[data-real-planned-amount="${payPlannedId}"]`);
+    const dateInput = document.querySelector(`[data-real-planned-date="${payPlannedId}"]`);
+    if (!bill || !amountInput || !dateInput) return;
+    const amount = normalizeCurrency(amountInput.value);
+    const paidDate = dateInput.value || new Date().toISOString().slice(0, 10);
+    bill.payments = bill.payments || {};
+    bill.payments[selectedMonth] = { amount, paidDate };
+
+    const existingExpense = state.expenses.find((expense) => expense.plannedBillId === bill.id && expense.plannedForMonth === selectedMonth);
+    const expenseData = {
+      id: makeId(),
+      description: bill.description,
+      amount,
+      date: paidDate,
+      personId: bill.personId,
+      accountType: bill.accountType,
+      category: bill.category,
+      carId: "",
+      recurring: false,
+      plannedBillId: bill.id,
+      plannedForMonth: selectedMonth,
+    };
+    if (existingExpense) {
+      Object.assign(existingExpense, { ...expenseData, id: existingExpense.id });
+    } else {
+      state.expenses.push(expenseData);
+    }
+    saveState();
+    render();
+  }
+
+  if (deletePlannedId) {
+    state.plannedBills = state.plannedBills.filter((bill) => bill.id !== deletePlannedId);
+    saveState();
+    render();
+  }
+
+  if (installmentId) {
+    state.installments = state.installments.filter((installment) => installment.id !== installmentId);
+    saveState();
+    render();
+  }
+
+  if (savePaidUntilId) {
+    const installment = state.installments.find((item) => item.id === savePaidUntilId);
+    const input = document.querySelector(`[data-paid-until-input="${savePaidUntilId}"]`);
+    installment.paidUntil = input.value;
+    installmentPaymentRows(installment).forEach((row) => {
+      setInstallmentPayment(installment, row.month, row.date <= installment.paidUntil);
+    });
+    saveState();
+    render();
+  }
+
+  if (setInstallmentPaymentId) {
+    const installment = state.installments.find((item) => item.id === setInstallmentPaymentId);
+    if (!installment) return;
+    const paymentMonth = event.target.dataset.paymentMonth;
+    const adjustmentInput = document.querySelector(`[data-installment-adjustment="${setInstallmentPaymentId}"][data-adjustment-month="${paymentMonth}"]`);
+    if (adjustmentInput) setInstallmentAdjustment(installment, paymentMonth, adjustmentInput.value);
+    setInstallmentPayment(installment, paymentMonth, event.target.dataset.paymentStatus === "true");
+    saveState();
+    render();
+  }
+
+  if (saveInstallmentAdjustmentId) {
+    const installment = state.installments.find((item) => item.id === saveInstallmentAdjustmentId);
+    const month = event.target.dataset.adjustmentMonth;
+    const input = document.querySelector(`[data-installment-adjustment="${saveInstallmentAdjustmentId}"][data-adjustment-month="${month}"]`);
+    if (!installment || !input) return;
+    setInstallmentAdjustment(installment, month, input.value);
+    saveState();
+    render();
+  }
+
+  if (personId) {
+    state.people = state.people.filter((person) => person.id !== personId);
+    state.expenses = state.expenses.filter((expense) => expense.personId !== personId);
+    state.installments = state.installments.filter((installment) => installment.personId !== personId);
+    saveState();
+    render();
+  }
+
+  if (editPersonId) {
+    const person = getPerson(editPersonId);
+    const name = prompt("Nome", person.name);
+    if (name === null) return;
+    const birthday = prompt("Data de aniversário no formato AAAA-MM-DD", person.birthday || "");
+    if (birthday === null) return;
+    person.name = name.trim() || person.name;
+    person.birthday = birthday.trim();
+    saveState();
+    render();
+  }
+
+  if (carId) {
+    state.cars = state.cars.filter((car) => car.id !== carId);
+    state.mileage = state.mileage.filter((item) => item.carId !== carId);
+    state.expenses = state.expenses.map((expense) => expense.carId === carId ? { ...expense, carId: "" } : expense);
+    saveState();
+    render();
+  }
+
+  if (userId) {
+    if (state.users.length <= 1) {
+      alert("Precisa ficar pelo menos um acesso cadastrado.");
+      return;
+    }
+    state.users = state.users.filter((user) => user.id !== userId);
+    currentUserId = state.users[0].id;
+    saveState();
+    render();
+  }
+});
+
+saveState();
+render();
+
+    </script>
+  </body>
+</html>
