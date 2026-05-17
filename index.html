@@ -21,7 +21,7 @@
         <div>
           <p class="eyebrow">Controle financeiro familiar</p>
           <h1>Minha Vida Financeira</h1>
-          <p class="muted">Entre para acompanhar gastos, ordenados, carros, dÃ­vidas e o fechamento do mÃªs.</p>
+          <p class="muted">Entre para acompanhar gastos, ordenados, carros, dívidas e o fechamento do mês.</p>
         </div>
 
         <form id="loginForm" class="stack">
@@ -35,7 +35,7 @@
           </label>
           <button type="submit" class="primary">Entrar</button>
           <p id="loginHint" class="hint">Acesso inicial: <strong>admin</strong> / <strong>admin123</strong></p>
-          <p id="loginError" class="error" hidden>Utilizador ou senha invÃ¡lidos.</p>
+          <p id="loginError" class="error" hidden>Utilizador ou senha inválidos.</p>
         </form>
       </section>
     </main>
@@ -44,16 +44,16 @@
       <aside class="sidebar">
         <div>
           <p class="eyebrow">Minha Vida Financeira</p>
-          <h2>FinanÃ§as</h2>
+          <h2>Finanças</h2>
         </div>
-        <nav aria-label="NavegaÃ§Ã£o principal">
+        <nav aria-label="Navegação principal">
           <button class="nav-link active" data-view="dashboardView">Home</button>
           <button class="nav-link" data-view="expensesView">Gastos</button>
           <button class="nav-link" data-view="installmentsView">Parcelas</button>
           <button class="nav-link" data-view="carsView">Carros</button>
           <button class="nav-link" data-view="savingsView">Guardado</button>
           <button class="nav-link" data-view="peopleView">Pessoas</button>
-          <button class="nav-link" data-view="reportsView">RelatÃ³rio</button>
+          <button class="nav-link" data-view="reportsView">Relatório</button>
           <button class="nav-link" data-view="accessView">Acesso</button>
         </nav>
         <button id="logoutBtn" class="ghost">Sair</button>
@@ -69,52 +69,52 @@
             <h1 id="viewTitle">Home</h1>
           </div>
           <div class="month-control">
-            <button id="prevMonth" class="icon-btn" title="MÃªs anterior" type="button">â€¹</button>
+            <button id="prevMonth" class="icon-btn" title="Mês anterior" type="button">&lsaquo;</button>
             <input id="selectedMonth" type="month" />
-            <button id="nextMonth" class="icon-btn" title="PrÃ³ximo mÃªs" type="button">â€º</button>
+            <button id="nextMonth" class="icon-btn" title="Próximo mês" type="button">&rsaquo;</button>
           </div>
         </header>
 
         <section id="dashboardView" class="view active-view">
           <div class="summary-grid">
             <article class="metric">
-              <span>Gastos do mÃªs</span>
-              <strong id="monthSpent">0,00 â‚¬</strong>
+              <span>Gastos do mês</span>
+              <strong id="monthSpent">0,00 &euro;</strong>
             </article>
             <article class="metric">
-              <span>Ordenados do mÃªs</span>
-              <strong id="monthIncome">0,00 â‚¬</strong>
+              <span>Ordenados do mês</span>
+              <strong id="monthIncome">0,00 &euro;</strong>
             </article>
             <article class="metric danger-metric">
-              <span>DÃ­vida trazida</span>
-              <strong id="monthDebt">0,00 â‚¬</strong>
+              <span>Dívida trazida</span>
+              <strong id="monthDebt">0,00 &euro;</strong>
             </article>
             <article class="metric">
-              <span>Precisa para o prÃ³ximo mÃªs</span>
-              <strong id="nextMonthNeeded">0,00 â‚¬</strong>
+              <span>Precisa para o próximo mês</span>
+              <strong id="nextMonthNeeded">0,00 &euro;</strong>
             </article>
             <article class="metric">
               <span>Guardado do casal</span>
-              <strong id="coupleSavings">0,00 â‚¬</strong>
+              <strong id="coupleSavings">0,00 &euro;</strong>
             </article>
             <article class="metric child">
               <span>Guardado da filha</span>
-              <strong id="childSavings">0,00 â‚¬</strong>
+              <strong id="childSavings">0,00 &euro;</strong>
             </article>
             <article class="metric">
               <span>Saldo do casal</span>
-              <strong id="coupleBankBalance">0,00 €</strong>
+              <strong id="coupleBankBalance">0,00 &euro;</strong>
             </article>
             <article class="metric family">
-              <span>Saldo da familia</span>
-              <strong id="familyBankBalance">0,00 €</strong>
+              <span>Saldo da família</span>
+              <strong id="familyBankBalance">0,00 &euro;</strong>
             </article>
             <article class="metric">
-              <span>CombustÃ­vel no ano</span>
-              <strong id="yearFuel">0,00 â‚¬</strong>
+              <span>Combustível no ano</span>
+              <strong id="yearFuel">0,00 &euro;</strong>
             </article>
             <article class="metric">
-              <span>Km no mÃªs</span>
+              <span>Km no mês</span>
               <strong id="monthKm">0 km</strong>
             </article>
           </div>
@@ -129,7 +129,7 @@
 
             <section class="panel">
               <div class="panel-title">
-                <h2>PrÃ³ximas contas</h2>
+                <h2>Próximas contas</h2>
               </div>
               <div id="upcomingBills" class="list"></div>
             </section>
@@ -140,17 +140,17 @@
           <div class="split">
             <div class="stack">
               <form id="plannedBillForm" class="panel form-grid">
-                <h2>Conta prevista do mÃªs</h2>
+                <h2>Conta prevista do mês</h2>
                 <div class="notice compact-notice">
-                  <strong>Use para Ã¡gua, energia, internet e arrendamento.</strong>
+                  <strong>Use para água, energia, internet e arrendamento.</strong>
                   <p>Coloque o valor previsto. Quando chegar a fatura, lance o valor real nos gastos.</p>
                 </div>
-                <label>DescriÃ§Ã£o<input id="plannedDescription" required placeholder="Ex: Ãgua, energia, internet" /></label>
+                <label>Descrição<input id="plannedDescription" required placeholder="Ex: Água, energia, internet" /></label>
                 <label>Valor previsto<input id="plannedAmount" type="number" min="0" step="0.01" required /></label>
-                <label>ComeÃ§a em<input id="plannedStart" type="month" required /></label>
+                <label>Começa em<input id="plannedStart" type="month" required /></label>
                 <label>Dia de vencimento<input id="plannedDueDay" type="number" min="1" max="31" step="1" value="10" required /></label>
                 <label>Categoria<select id="plannedCategory">
-                  <option>Ãgua</option>
+                  <option>Água</option>
                   <option>Energia</option>
                   <option>Internet</option>
                   <option>Arrendamento</option>
@@ -162,12 +162,12 @@
                   <option value="casal">Conta do casal</option>
                   <option value="individual">Individual</option>
                 </select></label>
-                <button class="primary" type="submit">Adicionar previsÃ£o</button>
+                <button class="primary" type="submit">Adicionar previsão</button>
               </form>
 
               <form id="expenseForm" class="panel form-grid">
                 <h2>Gasto real pago</h2>
-                <label>DescriÃ§Ã£o<input id="expenseDescription" required placeholder="Ex: CafÃ©, combustÃ­vel, Ã¡gua paga" /></label>
+                <label>Descrição<input id="expenseDescription" required placeholder="Ex: Café, combustível, água paga" /></label>
                 <label>Valor real<input id="expenseAmount" type="number" min="0" step="0.01" required /></label>
                 <label>Data<input id="expenseDate" type="date" required /></label>
                 <label>Pessoa<select id="expensePerson" required></select></label>
@@ -176,21 +176,21 @@
                   <option value="casal">Conta do casal</option>
                 </select></label>
                 <label>Categoria<select id="expenseCategory">
-                  <option>CafÃ©</option>
-                  <option>CombustÃ­vel</option>
+                  <option>Café</option>
+                  <option>Combustível</option>
                   <option>Internet</option>
-                  <option>Ãgua</option>
+                  <option>Água</option>
                   <option>Energia</option>
                   <option>Arrendamento</option>
                   <option>Casa</option>
                   <option>Mercado</option>
                   <option>Transporte</option>
-                  <option>SaÃºde</option>
+                  <option>Saúde</option>
                   <option>Filha</option>
                   <option>Lazer</option>
                   <option>Outros</option>
                 </select></label>
-                <label>Carro, se for combustÃ­vel<select id="expenseCar"></select></label>
+                <label>Carro, se for combustível<select id="expenseCar"></select></label>
                 <button class="primary" type="submit">Adicionar gasto real</button>
               </form>
             </div>
@@ -198,15 +198,15 @@
             <div class="stack">
               <section class="panel">
                 <div class="panel-title">
-                  <h2>Previsto do mÃªs</h2>
+                  <h2>Previsto do mês</h2>
                 </div>
                 <div id="plannedBillsList" class="list"></div>
               </section>
 
               <section class="panel">
                 <div class="panel-title">
-                  <h2>Gastos pagos no mÃªs</h2>
-                  <button id="clearExpenses" class="danger" type="button">Limpar mÃªs</button>
+                  <h2>Gastos pagos no mês</h2>
+                  <button id="clearExpenses" class="danger" type="button">Limpar mês</button>
                 </div>
                 <div id="expensesList" class="list"></div>
               </section>
@@ -218,11 +218,11 @@
           <div class="split">
             <form id="installmentForm" class="panel form-grid">
               <h2>Conta parcelada</h2>
-              <label>DescriÃ§Ã£o<input id="installmentDescription" required placeholder="Ex: Geladeira, cartÃ£o, sofÃ¡" /></label>
+              <label>Descrição<input id="installmentDescription" required placeholder="Ex: Geladeira, cartão, sofá" /></label>
               <label>Valor da parcela<input id="installmentAmount" type="number" min="0" step="0.01" required /></label>
               <label>Total de parcelas opcional<input id="installmentTotal" type="number" min="1" step="1" placeholder="Ex: 12" /></label>
               <label>Data da primeira parcela<input id="installmentStart" type="date" required /></label>
-              <label>Data da Ãºltima parcela opcional<input id="installmentEnd" type="date" /></label>
+              <label>Data da última parcela opcional<input id="installmentEnd" type="date" /></label>
               <label>Pessoa<select id="installmentPerson" required></select></label>
               <label>Tipo de conta<select id="installmentAccountType" required>
                 <option value="individual">Individual</option>
@@ -246,15 +246,15 @@
               <form id="carForm" class="panel form-grid">
                 <h2>Cadastrar carro</h2>
                 <label>Nome do carro<input id="carName" required placeholder="Ex: Golf, Clio, carrinha" /></label>
-                <label>MatrÃ­cula ou observaÃ§Ã£o<input id="carPlate" placeholder="Opcional" /></label>
+                <label>Matrícula ou observação<input id="carPlate" placeholder="Opcional" /></label>
                 <button class="primary" type="submit">Cadastrar carro</button>
               </form>
 
               <form id="mileageForm" class="panel form-grid">
-                <h2>Km feitos no mÃªs</h2>
+                <h2>Km feitos no mês</h2>
                 <label>Carro<select id="mileageCar" required></select></label>
-                <label>MÃªs<input id="mileageMonth" type="month" required /></label>
-                <label>QuilÃ³metros<input id="mileageKm" type="number" min="0" step="1" required /></label>
+                <label>Mês<input id="mileageMonth" type="month" required /></label>
+                <label>Quilómetros<input id="mileageKm" type="number" min="0" step="1" required /></label>
                 <button class="primary" type="submit">Salvar km</button>
               </form>
             </div>
@@ -281,11 +281,11 @@
 
             <section class="panel balance-panel">
               <div class="panel-title">
-                <h2>Visao da familia</h2>
+                <h2>Visão da família</h2>
               </div>
               <div class="notice compact-notice">
-                <strong>O saldo da familia soma Antonio, Juliana, Melissa e casal.</strong>
-                <p>Use estes valores para ver rapidamente o dinheiro no banco, sem misturar com despesas do mes.</p>
+                <strong>O saldo da família soma Antonio, Juliana, Melissa e casal.</strong>
+                <p>Use estes valores para ver rapidamente o dinheiro no banco, sem misturar com despesas do mês.</p>
               </div>
               <div id="savingsBreakdown" class="summary-grid compact balance-grid"></div>
             </section>
@@ -297,7 +297,7 @@
               <form id="personForm" class="panel form-grid">
                 <h2>Cadastrar pessoa</h2>
                 <label>Nome<input id="personName" required placeholder="Ex: Julia" /></label>
-                <label>Data de aniversÃ¡rio<input id="personBirthday" type="date" /></label>
+                <label>Data de aniversário<input id="personBirthday" type="date" /></label>
                 <label>Perfil<select id="personRole">
                   <option value="adulto">Adulto</option>
                   <option value="filha">Filha menor</option>
@@ -306,9 +306,9 @@
               </form>
 
               <form id="salaryForm" class="panel form-grid">
-                <h2>Ordenado recebido no mÃªs</h2>
+                <h2>Ordenado recebido no mês</h2>
                 <label>Pessoa<select id="salaryPerson" required></select></label>
-                <label>MÃªs<input id="salaryMonth" type="month" required /></label>
+                <label>Mês<input id="salaryMonth" type="month" required /></label>
                 <label>Valor recebido<input id="salaryAmount" type="number" min="0" step="0.01" required /></label>
                 <button class="primary" type="submit">Salvar ordenado</button>
               </form>
@@ -326,8 +326,8 @@
         <section id="reportsView" class="view">
           <section class="panel report-panel">
             <div class="panel-title">
-              <h2>Fechamento do mÃªs</h2>
-              <button id="closeMonthBtn" class="primary" type="button">Fechar mÃªs</button>
+              <h2>Fechamento do mês</h2>
+              <button id="closeMonthBtn" class="primary" type="button">Fechar mês</button>
             </div>
             <div id="reportOutput" class="report-output"></div>
           </section>
