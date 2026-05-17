@@ -34,6 +34,7 @@ const seedData = {
 let state = loadState();
 let selectedMonth = monthKey(new Date());
 let currentUserId = state.users[0]?.id || "";
+let cameraStream = null;
 
 const money = new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" });
 const monthName = new Intl.DateTimeFormat("pt-PT", { month: "long", year: "numeric" });
@@ -714,6 +715,55 @@ function renderAccess() {
     </article>`).join("");
 }
 
+function setPermissionStatus(message) {
+  $("#permissionStatus").textContent = message;
+}
+
+async function enableCamera() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setPermissionStatus("Este navegador não permite usar a câmera por aqui.");
+    return;
+  }
+
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    const preview = $("#cameraPreview");
+    preview.srcObject = cameraStream;
+    preview.hidden = false;
+    setPermissionStatus("Câmera ativada com permissão do usuário.");
+  } catch {
+    setPermissionStatus("Câmera não autorizada ou indisponível.");
+  }
+}
+
+function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach((track) => track.stop());
+    cameraStream = null;
+  }
+  const preview = $("#cameraPreview");
+  preview.srcObject = null;
+  preview.hidden = true;
+  setPermissionStatus("Câmera desligada.");
+}
+
+function getCurrentLocation() {
+  if (!navigator.geolocation) {
+    setPermissionStatus("Este navegador não permite pegar localização por aqui.");
+    return;
+  }
+
+  setPermissionStatus("Pedindo permissão de localização...");
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude, accuracy } = position.coords;
+      setPermissionStatus(`Localização autorizada: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}. Precisão aproximada: ${Math.round(accuracy)} m.`);
+    },
+    () => setPermissionStatus("Localização não autorizada ou indisponível."),
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
+}
+
 function createReport(month) {
   const expenses = getMonthExpenses(month);
   const expensesWithoutDebts = getMonthExpenses(month, { withoutDebts: true });
@@ -1026,6 +1076,10 @@ $("#newUserForm").addEventListener("submit", (event) => {
   event.target.reset();
   render();
 });
+
+$("#enableCameraBtn").addEventListener("click", enableCamera);
+$("#stopCameraBtn").addEventListener("click", stopCamera);
+$("#getLocationBtn").addEventListener("click", getCurrentLocation);
 
 $("#closeMonthBtn").addEventListener("click", () => {
   const report = createReport(selectedMonth);

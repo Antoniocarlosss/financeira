@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Financeira" />
-    <link rel="stylesheet" href="styles.css?v=13" />
+    <link rel="stylesheet" href="styles.css?v=14" />
   </head>
   <body>
     <main id="loginScreen" class="login-shell">
@@ -370,12 +370,29 @@
               <button class="primary" type="submit">Criar acesso</button>
               <div id="usersList" class="list"></div>
             </form>
+
+            <section class="panel permissions-panel">
+              <div class="panel-title">
+                <h2>Permissões do aparelho</h2>
+              </div>
+              <div class="notice compact-notice">
+                <strong>Use apenas quando quiser autorizar.</strong>
+                <p>A câmera e a localização ficam no aparelho e precisam da permissão do navegador.</p>
+              </div>
+              <div class="permission-actions">
+                <button id="enableCameraBtn" class="primary" type="button">Ativar câmera</button>
+                <button id="stopCameraBtn" class="ghost" type="button">Desligar câmera</button>
+                <button id="getLocationBtn" class="primary" type="button">Pegar localização</button>
+              </div>
+              <video id="cameraPreview" class="camera-preview" autoplay playsinline muted hidden></video>
+              <div id="permissionStatus" class="permission-status">Nenhuma permissão ativada.</div>
+            </section>
           </div>
         </section>
       </section>
     </main>
 
-    <script src="app.js?v=13"></script>
+    <script src="app.js?v=14"></script>
     <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
