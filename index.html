@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Financeira" />
-    <link rel="stylesheet" href="styles.css?v=15" />
+    <link rel="stylesheet" href="styles.css?v=16" />
   </head>
   <body>
     <main id="loginScreen" class="login-shell">
@@ -222,6 +222,7 @@
               <label>Valor da parcela<input id="installmentAmount" type="number" min="0" step="0.01" required /></label>
               <label>Total de parcelas opcional<input id="installmentTotal" type="number" min="1" step="1" placeholder="Ex: 12" /></label>
               <label>Data da primeira parcela<input id="installmentStart" type="date" required /></label>
+              <label>Dia de vencimento<input id="installmentDueDay" type="number" min="1" max="31" step="1" value="10" required /></label>
               <label>Data da última parcela opcional<input id="installmentEnd" type="date" /></label>
               <label>Pessoa<select id="installmentPerson" required></select></label>
               <label>Tipo de conta<select id="installmentAccountType" required>
@@ -392,7 +393,7 @@
       </section>
     </main>
 
-    <script src="app.js?v=15"></script>
+    <script src="app.js?v=16"></script>
     <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

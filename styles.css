@@ -523,6 +523,11 @@ nav {
   background: #fffaf4;
 }
 
+.payment-columns li.late {
+  background: #f7e8e6;
+  color: var(--danger);
+}
+
 .car-total-card {
   background: #eef7f2;
 }

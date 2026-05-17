@@ -83,6 +83,7 @@ function loadState() {
       payments: {},
       adjustments: {},
       ...installment,
+      dueDay: inferInstallmentDueDay(installment),
     }));
     ensurePersonalPeople(merged);
     return merged;
@@ -166,12 +167,28 @@ function expenseOccursInMonth(expense, month) {
   return monthKey(expense.date) === month;
 }
 
+function inferInstallmentDueDay(installment) {
+  if (Number(installment.dueDay)) return Number(installment.dueDay);
+
+  const description = (installment.description || "").toLowerCase();
+  if (description.includes("ford") || description.includes("fiesta")) return 4;
+  if (description.includes("maquina") || description.includes("máquina") || description.includes("credibom")) return 17;
+  if (description.includes("nissan") || description.includes("qashqai")) return 25;
+
+  if (installment.startDate) return new Date(`${installment.startDate}T12:00:00`).getDate();
+  return 10;
+}
+
+function normalizeDueDay(day) {
+  return Math.min(31, Math.max(1, Number(day || 10)));
+}
+
 function installmentMonths(installment) {
   return Array.from({ length: installment.total }, (_, index) => addMonths(installment.startMonth, index));
 }
 
 function installmentChargeDate(installment, month) {
-  const day = installment.startDate ? new Date(`${installment.startDate}T12:00:00`).getDate() : 5;
+  const day = normalizeDueDay(installment.dueDay || inferInstallmentDueDay(installment));
   const lastDay = new Date(dateFromMonth(addMonths(month, 1)) - 1).getDate();
   return `${month}-${String(Math.min(day, lastDay)).padStart(2, "0")}`;
 }
@@ -194,7 +211,7 @@ function installmentIsPaid(installment, month) {
   if (installment.paidUntil) {
     return installmentChargeDate(installment, month) <= installment.paidUntil;
   }
-  return month < selectedMonth;
+  return false;
 }
 
 function setInstallmentPayment(installment, month, paid) {
@@ -242,13 +259,16 @@ function installmentExpenseForMonth(installment, month) {
   const months = installmentMonths(installment);
   const index = months.indexOf(month);
   if (index === -1) return null;
+  const chargeDate = installmentChargeDate(installment, month);
   return {
     id: `${installment.id}-${month}`,
     description: `${installment.description} (${index + 1}/${installment.total})`,
     amount: installmentTotalForMonth(installment, month),
     baseAmount: installment.amount,
     adjustment: installmentAdjustment(installment, month),
-    date: installmentChargeDate(installment, month),
+    date: chargeDate,
+    dueDate: chargeDate,
+    originalMonth: month,
     personId: installment.personId,
     accountType: installment.accountType,
     category: "Parcelada",
@@ -260,10 +280,28 @@ function installmentExpenseForMonth(installment, month) {
 }
 
 function installmentExpensesForMonth(month, options = {}) {
-  return state.installments
+  const currentMonthExpenses = state.installments
     .filter((installment) => installmentOccursInMonth(installment, month))
     .map((installment) => installmentExpenseForMonth(installment, month))
     .filter((expense) => expense && (options.includeUnpaid || expense.installmentPaid));
+
+  if (!options.includeOverdue) return currentMonthExpenses;
+
+  const overdueExpenses = overdueInstallmentExpensesForMonth(month);
+  return [...overdueExpenses, ...currentMonthExpenses];
+}
+
+function overdueInstallmentExpensesForMonth(month) {
+  return state.installments.flatMap((installment) => {
+    const rows = installmentPaymentRows(installment).filter((row) => row.month < month && !row.paid);
+    return rows.map((row) => ({
+      ...installmentExpenseForMonth(installment, row.month),
+      id: `${installment.id}-${row.month}-overdue-${month}`,
+      description: `${installment.description} (${row.number}/${installment.total}) - atrasada de ${formatMonth(row.month)}`,
+      carriedToMonth: month,
+      overdue: true,
+    }));
+  });
 }
 
 function debtExpensesForMonth(month) {
@@ -284,7 +322,10 @@ function debtExpensesForMonth(month) {
 
 function getMonthExpenses(month, options = {}) {
   const direct = state.expenses.filter((expense) => expenseOccursInMonth(expense, month));
-  const installments = installmentExpensesForMonth(month, { includeUnpaid: options.includeUnpaidInstallments });
+  const installments = installmentExpensesForMonth(month, {
+    includeUnpaid: options.includeUnpaidInstallments,
+    includeOverdue: options.includeUnpaidInstallments,
+  });
   const debts = options.withoutDebts ? [] : debtExpensesForMonth(month);
 
   return [...debts, ...direct, ...installments].sort((a, b) => a.date.localeCompare(b.date));
@@ -511,9 +552,16 @@ function renderExpenses() {
         ${isAutomatic ? `<span class="item-meta">Gerada automaticamente.</span><div class="item-actions">${installmentActions}</div>` : `<div class="item-actions"><button class="danger" type="button" data-delete-expense="${expense.id}">Excluir</button></div>`}
       </article>`;
   }).join("");
-  const unpaidInstallmentRows = installmentExpensesForMonth(selectedMonth, { includeUnpaid: true })
+  const unpaidInstallmentRows = installmentExpensesForMonth(selectedMonth, { includeUnpaid: true, includeOverdue: true })
     .filter((expense) => !expense.installmentPaid)
-    .map((expense) => `
+    .map((expense) => {
+      const paymentMonth = expense.originalMonth || selectedMonth;
+      const statusText = expense.overdue ? "Em atraso" : "Em falta";
+      const statusClass = expense.overdue ? "late" : "open";
+      const helperText = expense.overdue
+        ? `Parcela vencida em ${new Date(`${expense.dueDate}T12:00:00`).toLocaleDateString("pt-PT")}. Altere juros/mudança antes de marcar paga.`
+        : "Parcela do mês ainda não paga. Se atrasou ou teve juros, salve a mudança antes de marcar paga.";
+      return `
       <article class="item payment-card unpaid-installment">
         <div class="item-head">
           <div>
@@ -522,18 +570,19 @@ function renderExpenses() {
           </div>
           <div class="value-stack">
             <span class="item-value">${money.format(expense.amount)}</span>
-            <strong class="status-pill open">Em falta</strong>
+            <strong class="status-pill ${statusClass}">${statusText}</strong>
           </div>
         </div>
-        <span class="item-meta">Parcela do mes ainda nao paga. Se atrasou ou teve juros, salve a mudanca antes de marcar paga.</span>
+        <span class="item-meta">${helperText}</span>
         <div class="inline-form interest-form">
-          <label>Juros ou mudanca<input type="number" min="0" step="0.01" value="${expense.adjustment || 0}" data-installment-adjustment="${expense.installmentId}" data-adjustment-month="${selectedMonth}" /></label>
-          <button class="ghost" type="button" data-save-installment-adjustment="${expense.installmentId}" data-adjustment-month="${selectedMonth}">Salvar mudanca</button>
+          <label>Juros ou mudança<input type="number" min="0" step="0.01" value="${expense.adjustment || 0}" data-installment-adjustment="${expense.installmentId}" data-adjustment-month="${paymentMonth}" /></label>
+          <button class="ghost" type="button" data-save-installment-adjustment="${expense.installmentId}" data-adjustment-month="${paymentMonth}">Salvar mudança</button>
         </div>
         <div class="item-actions">
-          <button class="primary" type="button" data-set-installment-payment="${expense.installmentId}" data-payment-month="${selectedMonth}" data-payment-status="true">Marcar paga</button>
+          <button class="primary" type="button" data-set-installment-payment="${expense.installmentId}" data-payment-month="${paymentMonth}" data-payment-status="true">Marcar paga</button>
         </div>
-      </article>`).join("");
+      </article>`;
+    }).join("");
   const rows = paidExpenseRows + unpaidInstallmentRows;
 
   $("#expensesList").innerHTML = rows || empty("Nenhum gasto lancado neste mes.");
@@ -562,8 +611,8 @@ function renderInstallments() {
         <button class="ghost mini-btn" type="button" data-set-installment-payment="${installment.id}" data-payment-month="${row.month}" data-payment-status="false">Desmarcar</button>
       </li>`).join("");
     const openRows = allPaymentRows.filter((row) => !row.paid).map((row) => `
-      <li class="open">
-        <span>${row.number}/${installment.total} - ${new Date(`${row.date}T12:00:00`).toLocaleDateString("pt-PT")}</span>
+      <li class="${row.month < selectedMonth ? "late" : "open"}">
+        <span>${row.number}/${installment.total} - ${new Date(`${row.date}T12:00:00`).toLocaleDateString("pt-PT")}${row.month < selectedMonth ? " - em atraso" : ""}${row.adjustment ? ` - juros ${money.format(row.adjustment)}` : ""}</span>
         <strong>${money.format(row.amount)}</strong>
         <button class="primary mini-btn" type="button" data-set-installment-payment="${installment.id}" data-payment-month="${row.month}" data-payment-status="true">Paga</button>
       </li>`).join("");
@@ -580,6 +629,10 @@ function renderInstallments() {
           <span style="width: ${paidPercent}%"></span>
         </div>
         <span class="item-meta">${paidPercent.toFixed(1)}% pago - ${remainingPercent.toFixed(1)}% falta - ${remainingTime} para acabar.</span>
+        <div class="inline-form">
+          <label>Dia de vencimento<input type="number" min="1" max="31" step="1" data-installment-due-day="${installment.id}" value="${normalizeDueDay(installment.dueDay || inferInstallmentDueDay(installment))}" /></label>
+          <button class="ghost" type="button" data-save-installment-due-day="${installment.id}">Salvar vencimento</button>
+        </div>
         <div class="inline-form">
           <label>Pago ate<input type="date" data-paid-until-input="${installment.id}" value="${installment.paidUntil || defaultPaidUntil()}" /></label>
           <button class="ghost" type="button" data-save-paid-until="${installment.id}">Salvar pago ate</button>
@@ -900,6 +953,11 @@ $("#fuelDate").valueAsDate = new Date();
 $("#installmentStart").valueAsDate = new Date();
 $("#plannedStart").value = selectedMonth;
 
+$("#installmentStart").addEventListener("change", (event) => {
+  if (!event.target.value) return;
+  $("#installmentDueDay").value = String(new Date(`${event.target.value}T12:00:00`).getDate());
+});
+
 $("#plannedBillForm").addEventListener("submit", (event) => {
   event.preventDefault();
   state.plannedBills.push({
@@ -959,6 +1017,7 @@ $("#installmentForm").addEventListener("submit", (event) => {
     total: calculatedTotal,
     startMonth,
     startDate,
+    dueDay: normalizeDueDay($("#installmentDueDay").value),
     personId: $("#installmentPerson").value,
     accountType: $("#installmentAccountType").value,
     payments: {},
@@ -967,6 +1026,7 @@ $("#installmentForm").addEventListener("submit", (event) => {
   saveState();
   event.target.reset();
   $("#installmentStart").valueAsDate = new Date();
+  $("#installmentDueDay").value = "10";
   render();
 });
 
@@ -1112,7 +1172,7 @@ $("#clearExpenses").addEventListener("click", () => {
 });
 
 document.body.addEventListener("click", (event) => {
-  const action = event.target.closest("button[data-delete-expense], button[data-delete-installment], button[data-delete-person], button[data-edit-person], button[data-delete-car], button[data-delete-user], button[data-save-paid-until], button[data-set-installment-payment], button[data-save-installment-adjustment], button[data-pay-planned], button[data-delete-planned]");
+  const action = event.target.closest("button[data-delete-expense], button[data-delete-installment], button[data-delete-person], button[data-edit-person], button[data-delete-car], button[data-delete-user], button[data-save-paid-until], button[data-save-installment-due-day], button[data-set-installment-payment], button[data-save-installment-adjustment], button[data-pay-planned], button[data-delete-planned]");
   if (!action) return;
 
   const expenseId = action.dataset.deleteExpense;
@@ -1122,6 +1182,7 @@ document.body.addEventListener("click", (event) => {
   const carId = action.dataset.deleteCar;
   const userId = action.dataset.deleteUser;
   const savePaidUntilId = action.dataset.savePaidUntil;
+  const saveInstallmentDueDayId = action.dataset.saveInstallmentDueDay;
   const setInstallmentPaymentId = action.dataset.setInstallmentPayment;
   const saveInstallmentAdjustmentId = action.dataset.saveInstallmentAdjustment;
   const payPlannedId = action.dataset.payPlanned;
@@ -1185,6 +1246,20 @@ document.body.addEventListener("click", (event) => {
     installmentPaymentRows(installment).forEach((row) => {
       setInstallmentPayment(installment, row.month, row.date <= installment.paidUntil);
     });
+    saveState();
+    render();
+  }
+
+  if (saveInstallmentDueDayId) {
+    const installment = state.installments.find((item) => item.id === saveInstallmentDueDayId);
+    const input = document.querySelector(`[data-installment-due-day="${saveInstallmentDueDayId}"]`);
+    if (!installment || !input) return;
+    installment.dueDay = normalizeDueDay(input.value);
+    if (installment.paidUntil) {
+      installmentPaymentRows(installment).forEach((row) => {
+        setInstallmentPayment(installment, row.month, row.date <= installment.paidUntil);
+      });
+    }
     saveState();
     render();
   }
