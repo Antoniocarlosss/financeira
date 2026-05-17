@@ -1077,9 +1077,9 @@ $("#newUserForm").addEventListener("submit", (event) => {
   render();
 });
 
-$("#enableCameraBtn").addEventListener("click", enableCamera);
-$("#stopCameraBtn").addEventListener("click", stopCamera);
-$("#getLocationBtn").addEventListener("click", getCurrentLocation);
+$("#enableCameraBtn")?.addEventListener("click", enableCamera);
+$("#stopCameraBtn")?.addEventListener("click", stopCamera);
+$("#getLocationBtn")?.addEventListener("click", getCurrentLocation);
 
 $("#closeMonthBtn").addEventListener("click", () => {
   const report = createReport(selectedMonth);
@@ -1112,17 +1112,20 @@ $("#clearExpenses").addEventListener("click", () => {
 });
 
 document.body.addEventListener("click", (event) => {
-  const expenseId = event.target.dataset.deleteExpense;
-  const installmentId = event.target.dataset.deleteInstallment;
-  const personId = event.target.dataset.deletePerson;
-  const editPersonId = event.target.dataset.editPerson;
-  const carId = event.target.dataset.deleteCar;
-  const userId = event.target.dataset.deleteUser;
-  const savePaidUntilId = event.target.dataset.savePaidUntil;
-  const setInstallmentPaymentId = event.target.dataset.setInstallmentPayment;
-  const saveInstallmentAdjustmentId = event.target.dataset.saveInstallmentAdjustment;
-  const payPlannedId = event.target.dataset.payPlanned;
-  const deletePlannedId = event.target.dataset.deletePlanned;
+  const action = event.target.closest("button[data-delete-expense], button[data-delete-installment], button[data-delete-person], button[data-edit-person], button[data-delete-car], button[data-delete-user], button[data-save-paid-until], button[data-set-installment-payment], button[data-save-installment-adjustment], button[data-pay-planned], button[data-delete-planned]");
+  if (!action) return;
+
+  const expenseId = action.dataset.deleteExpense;
+  const installmentId = action.dataset.deleteInstallment;
+  const personId = action.dataset.deletePerson;
+  const editPersonId = action.dataset.editPerson;
+  const carId = action.dataset.deleteCar;
+  const userId = action.dataset.deleteUser;
+  const savePaidUntilId = action.dataset.savePaidUntil;
+  const setInstallmentPaymentId = action.dataset.setInstallmentPayment;
+  const saveInstallmentAdjustmentId = action.dataset.saveInstallmentAdjustment;
+  const payPlannedId = action.dataset.payPlanned;
+  const deletePlannedId = action.dataset.deletePlanned;
 
   if (expenseId) {
     state.expenses = state.expenses.filter((expense) => expense.id !== expenseId);
@@ -1189,17 +1192,17 @@ document.body.addEventListener("click", (event) => {
   if (setInstallmentPaymentId) {
     const installment = state.installments.find((item) => item.id === setInstallmentPaymentId);
     if (!installment) return;
-    const paymentMonth = event.target.dataset.paymentMonth;
+    const paymentMonth = action.dataset.paymentMonth;
     const adjustmentInput = document.querySelector(`[data-installment-adjustment="${setInstallmentPaymentId}"][data-adjustment-month="${paymentMonth}"]`);
     if (adjustmentInput) setInstallmentAdjustment(installment, paymentMonth, adjustmentInput.value);
-    setInstallmentPayment(installment, paymentMonth, event.target.dataset.paymentStatus === "true");
+    setInstallmentPayment(installment, paymentMonth, action.dataset.paymentStatus === "true");
     saveState();
     render();
   }
 
   if (saveInstallmentAdjustmentId) {
     const installment = state.installments.find((item) => item.id === saveInstallmentAdjustmentId);
-    const month = event.target.dataset.adjustmentMonth;
+    const month = action.dataset.adjustmentMonth;
     const input = document.querySelector(`[data-installment-adjustment="${saveInstallmentAdjustmentId}"][data-adjustment-month="${month}"]`);
     if (!installment || !input) return;
     setInstallmentAdjustment(installment, month, input.value);
