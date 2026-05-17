@@ -165,6 +165,15 @@ function initFirebase() {
   return firebase.firestore();
 }
 
+function ensureFirebaseDb() {
+  firebaseDb = firebaseDb || initFirebase();
+  if (!firebaseDb) {
+    setSyncStatus("Firebase não carregou. Abra com internet e tente de novo.");
+    return false;
+  }
+  return true;
+}
+
 function remoteRef() {
   return firebaseDb.collection(FIREBASE_COLLECTION).doc(FIREBASE_DOC_ID);
 }
@@ -175,7 +184,7 @@ function queueRemoteSave() {
 }
 
 async function saveRemoteState() {
-  if (!firebaseDb) return;
+  if (!ensureFirebaseDb()) return;
   try {
     await remoteRef().set({
       state: cloneData(state),
@@ -188,9 +197,39 @@ async function saveRemoteState() {
   }
 }
 
+async function forceUploadFirebase() {
+  if (!ensureFirebaseDb()) return;
+  remoteReady = true;
+  setSyncStatus("Enviando dados deste aparelho para o Firebase...");
+  await saveRemoteState();
+}
+
+async function forceDownloadFirebase() {
+  if (!ensureFirebaseDb()) return;
+  try {
+    setSyncStatus("Carregando dados do Firebase...");
+    const snapshot = await remoteRef().get();
+    if (!snapshot.exists || !snapshot.data()?.state) {
+      setSyncStatus("Firebase ainda está vazio. Primeiro envie os dados pelo computador.");
+      return;
+    }
+    applyingRemoteState = true;
+    state = normalizeState(snapshot.data().state);
+    currentUserId = state.users.find((user) => user.id === currentUserId)?.id || state.users[0]?.id || "";
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    applyingRemoteState = false;
+    remoteReady = true;
+    setSyncStatus("Dados do Firebase carregados neste aparelho.");
+    render();
+  } catch (error) {
+    applyingRemoteState = false;
+    setSyncStatus("Não foi possível carregar do Firebase. Verifique as regras do Firestore.");
+    console.error("Erro ao carregar manualmente do Firebase", error);
+  }
+}
+
 async function loadRemoteState() {
-  firebaseDb = initFirebase();
-  if (!firebaseDb) {
+  if (!ensureFirebaseDb()) {
     setSyncStatus("Firebase não carregou. Verifique a internet.");
     return;
   }
@@ -1267,6 +1306,8 @@ $("#newUserForm").addEventListener("submit", (event) => {
 $("#enableCameraBtn")?.addEventListener("click", enableCamera);
 $("#stopCameraBtn")?.addEventListener("click", stopCamera);
 $("#getLocationBtn")?.addEventListener("click", getCurrentLocation);
+$("#uploadFirebaseBtn")?.addEventListener("click", forceUploadFirebase);
+$("#downloadFirebaseBtn")?.addEventListener("click", forceDownloadFirebase);
 
 $("#closeMonthBtn").addEventListener("click", () => {
   const report = createReport(selectedMonth);

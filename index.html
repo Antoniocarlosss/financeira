@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Financeira" />
-    <link rel="stylesheet" href="styles.css?v=18" />
+    <link rel="stylesheet" href="styles.css?v=19" />
   </head>
   <body>
     <main id="loginScreen" class="login-shell">
@@ -377,6 +377,10 @@
                 <h2>Banco de dados</h2>
               </div>
               <div id="syncStatus" class="permission-status">Firebase ainda não conectado.</div>
+              <div class="permission-actions sync-actions">
+                <button id="uploadFirebaseBtn" class="primary" type="button">Enviar este aparelho para Firebase</button>
+                <button id="downloadFirebaseBtn" class="ghost" type="button">Carregar Firebase neste aparelho</button>
+              </div>
             </section>
 
             <section class="panel permissions-panel">
@@ -402,7 +406,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-    <script src="app.js?v=18"></script>
+    <script src="app.js?v=19"></script>
     <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
