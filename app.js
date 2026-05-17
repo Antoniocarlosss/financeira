@@ -50,6 +50,7 @@ let firebaseDb = null;
 let remoteReady = false;
 let applyingRemoteState = false;
 let remoteSaveTimer = null;
+let syncStatusText = "Firebase ainda não conectado.";
 
 const money = new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" });
 const monthName = new Intl.DateTimeFormat("pt-PT", { month: "long", year: "numeric" });
@@ -138,6 +139,26 @@ function saveState() {
   if (remoteReady && !applyingRemoteState) queueRemoteSave();
 }
 
+function stateScore(data) {
+  return [
+    data.plannedBills?.length || 0,
+    data.expenses?.length || 0,
+    data.installments?.length || 0,
+    data.cars?.length || 0,
+    data.mileage?.length || 0,
+    data.debts?.length || 0,
+    data.reports?.length || 0,
+    Object.values(data.bankBalances || {}).filter((value) => Number(value || 0) > 0).length,
+    Object.values(data.savings || {}).filter((value) => Number(value || 0) > 0).length,
+  ].reduce((sum, value) => sum + value, 0);
+}
+
+function setSyncStatus(message) {
+  syncStatusText = message;
+  const status = $("#syncStatus");
+  if (status) status.textContent = message;
+}
+
 function initFirebase() {
   if (!window.firebase?.initializeApp || !window.firebase?.firestore) return null;
   if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
@@ -160,14 +181,19 @@ async function saveRemoteState() {
       state: cloneData(state),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
+    setSyncStatus("Dados salvos no Firebase.");
   } catch (error) {
+    setSyncStatus("Não foi possível salvar no Firebase. Verifique as regras do Firestore.");
     console.error("Erro ao salvar no Firebase", error);
   }
 }
 
 async function loadRemoteState() {
   firebaseDb = initFirebase();
-  if (!firebaseDb) return;
+  if (!firebaseDb) {
+    setSyncStatus("Firebase não carregou. Verifique a internet.");
+    return;
+  }
 
   try {
     const ref = remoteRef();
@@ -175,28 +201,46 @@ async function loadRemoteState() {
     remoteReady = true;
 
     if (snapshot.exists && snapshot.data()?.state) {
-      applyingRemoteState = true;
-      state = normalizeState(snapshot.data().state);
-      currentUserId = state.users[0]?.id || "";
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      applyingRemoteState = false;
-      render();
+      const remoteState = normalizeState(snapshot.data().state);
+      const localScore = stateScore(state);
+      const remoteScore = stateScore(remoteState);
+
+      if (localScore > remoteScore) {
+        setSyncStatus("Este aparelho tinha mais dados. Enviando para o Firebase...");
+        await saveRemoteState();
+      } else {
+        applyingRemoteState = true;
+        state = remoteState;
+        currentUserId = state.users[0]?.id || "";
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        applyingRemoteState = false;
+        setSyncStatus("Dados carregados do Firebase.");
+        render();
+      }
     } else {
+      setSyncStatus("Firebase vazio. Enviando dados deste aparelho...");
       await saveRemoteState();
     }
 
     ref.onSnapshot((nextSnapshot) => {
       if (!nextSnapshot.exists || nextSnapshot.metadata.hasPendingWrites || !nextSnapshot.data()?.state) return;
+      const remoteState = normalizeState(nextSnapshot.data().state);
+      if (stateScore(state) > stateScore(remoteState)) {
+        queueRemoteSave();
+        return;
+      }
       applyingRemoteState = true;
-      state = normalizeState(nextSnapshot.data().state);
+      state = remoteState;
       currentUserId = state.users.find((user) => user.id === currentUserId)?.id || state.users[0]?.id || "";
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       applyingRemoteState = false;
+      setSyncStatus("Dados sincronizados com Firebase.");
       render();
     });
   } catch (error) {
     remoteReady = false;
     applyingRemoteState = false;
+    setSyncStatus("Firebase não conectou. Verifique se o Firestore foi criado e se as regras permitem leitura/escrita.");
     console.error("Erro ao carregar Firebase", error);
   }
 }
@@ -840,6 +884,7 @@ function renderAccess() {
   $("#accessUsername").value = user?.username || "";
   $("#accessPassword").value = user?.password || "";
   $("#loginHint").innerHTML = `Acesso inicial: <strong>${state.users[0]?.username || "admin"}</strong> / <strong>${state.users[0]?.password || "admin123"}</strong>`;
+  $("#syncStatus").textContent = syncStatusText;
   $("#usersList").innerHTML = state.users.map((item) => `
     <article class="item">
       <div class="item-head">
