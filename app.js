@@ -1,13 +1,16 @@
-import { db } from "./firebase-config.js";
-
-import {
-  doc,
-  setDoc,
-  getDoc,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 const STORAGE_KEY = "minha-vida-financeira-v2";
 const OLD_STORAGE_KEY = "minha-vida-financeira-v1";
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDK11aMTJepWZGe_GqqFvB7W-3IwENbZKY",
+  authDomain: "financeira-6cb17.firebaseapp.com",
+  projectId: "financeira-6cb17",
+  storageBucket: "financeira-6cb17.firebasestorage.app",
+  messagingSenderId: "1054909648852",
+  appId: "1:1054909648852:web:a92d38e5ba640987cd9041",
+  measurementId: "G-BH5LR1DFDN",
+};
+const FIREBASE_COLLECTION = "financeira";
+const FIREBASE_DOC_ID = "estado-principal";
 
 function makeId() {
   return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -40,16 +43,13 @@ const seedData = {
 };
 
 let state = loadState();
-const stateRef = doc(
-  db,
-  "familias",
-  "antonio-financeira",
-  "state",
-  "atual"
-);
 let selectedMonth = monthKey(new Date());
 let currentUserId = state.users[0]?.id || "";
 let cameraStream = null;
+let firebaseDb = null;
+let remoteReady = false;
+let applyingRemoteState = false;
+let remoteSaveTimer = null;
 
 const money = new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" });
 const monthName = new Intl.DateTimeFormat("pt-PT", { month: "long", year: "numeric" });
@@ -61,50 +61,53 @@ function loadState() {
   if (!raw) return cloneData(seedData);
 
   try {
-    const data = JSON.parse(raw);
-    const merged = {
-      ...cloneData(seedData),
-      ...data,
-      savings: { ...seedData.savings, ...(data.savings || {}) },
-      bankBalances: {
-        ...seedData.bankBalances,
-        casal: data.bankBalances?.casal ?? data.savings?.casal ?? 0,
-        melissa: data.bankBalances?.melissa ?? data.savings?.filha ?? 0,
-        ...(data.bankBalances || {}),
-      },
-      users: data.users?.length ? data.users : cloneData(seedData.users),
-      people: data.people?.length ? data.people : cloneData(seedData.people),
-      plannedBills: data.plannedBills || [],
-      cars: data.cars || [],
-      mileage: data.mileage || [],
-      debts: data.debts || [],
-      reports: data.reports || [],
-    };
-
-    merged.users = merged.users.map((user) => ({ id: user.id || makeId(), role: "admin", ...user }));
-    merged.people = merged.people.map((person) => ({
-      id: person.id || makeId(),
-      name: person.name || "Pessoa",
-      birthday: person.birthday || "",
-      role: person.role || "adulto",
-      salaries: person.salaries || (person.salary ? { [monthKey(new Date())]: Number(person.salary) } : {}),
-    }));
-    merged.plannedBills = merged.plannedBills.map((bill) => ({
-      dueDay: 10,
-      payments: {},
-      ...bill,
-    }));
-    merged.installments = (merged.installments || []).map((installment) => ({
-      payments: {},
-      adjustments: {},
-      ...installment,
-      dueDay: inferInstallmentDueDay(installment),
-    }));
-    ensurePersonalPeople(merged);
-    return merged;
+    return normalizeState(JSON.parse(raw));
   } catch {
     return cloneData(seedData);
   }
+}
+
+function normalizeState(data) {
+  const merged = {
+    ...cloneData(seedData),
+    ...data,
+    savings: { ...seedData.savings, ...(data.savings || {}) },
+    bankBalances: {
+      ...seedData.bankBalances,
+      casal: data.bankBalances?.casal ?? data.savings?.casal ?? 0,
+      melissa: data.bankBalances?.melissa ?? data.savings?.filha ?? 0,
+      ...(data.bankBalances || {}),
+    },
+    users: data.users?.length ? data.users : cloneData(seedData.users),
+    people: data.people?.length ? data.people : cloneData(seedData.people),
+    plannedBills: data.plannedBills || [],
+    cars: data.cars || [],
+    mileage: data.mileage || [],
+    debts: data.debts || [],
+    reports: data.reports || [],
+  };
+
+  merged.users = merged.users.map((user) => ({ id: user.id || makeId(), role: "admin", ...user }));
+  merged.people = merged.people.map((person) => ({
+    id: person.id || makeId(),
+    name: person.name || "Pessoa",
+    birthday: person.birthday || "",
+    role: person.role || "adulto",
+    salaries: person.salaries || (person.salary ? { [monthKey(new Date())]: Number(person.salary) } : {}),
+  }));
+  merged.plannedBills = merged.plannedBills.map((bill) => ({
+    dueDay: 10,
+    payments: {},
+    ...bill,
+  }));
+  merged.installments = (merged.installments || []).map((installment) => ({
+    payments: {},
+    adjustments: {},
+    ...installment,
+    dueDay: inferInstallmentDueDay(installment),
+  }));
+  ensurePersonalPeople(merged);
+  return merged;
 }
 
 function ensurePersonalPeople(data) {
@@ -132,6 +135,70 @@ function ensurePersonalPeople(data) {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (remoteReady && !applyingRemoteState) queueRemoteSave();
+}
+
+function initFirebase() {
+  if (!window.firebase?.initializeApp || !window.firebase?.firestore) return null;
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  return firebase.firestore();
+}
+
+function remoteRef() {
+  return firebaseDb.collection(FIREBASE_COLLECTION).doc(FIREBASE_DOC_ID);
+}
+
+function queueRemoteSave() {
+  clearTimeout(remoteSaveTimer);
+  remoteSaveTimer = setTimeout(saveRemoteState, 700);
+}
+
+async function saveRemoteState() {
+  if (!firebaseDb) return;
+  try {
+    await remoteRef().set({
+      state: cloneData(state),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch (error) {
+    console.error("Erro ao salvar no Firebase", error);
+  }
+}
+
+async function loadRemoteState() {
+  firebaseDb = initFirebase();
+  if (!firebaseDb) return;
+
+  try {
+    const ref = remoteRef();
+    const snapshot = await ref.get();
+    remoteReady = true;
+
+    if (snapshot.exists && snapshot.data()?.state) {
+      applyingRemoteState = true;
+      state = normalizeState(snapshot.data().state);
+      currentUserId = state.users[0]?.id || "";
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      applyingRemoteState = false;
+      render();
+    } else {
+      await saveRemoteState();
+    }
+
+    ref.onSnapshot((nextSnapshot) => {
+      if (!nextSnapshot.exists || nextSnapshot.metadata.hasPendingWrites || !nextSnapshot.data()?.state) return;
+      applyingRemoteState = true;
+      state = normalizeState(nextSnapshot.data().state);
+      currentUserId = state.users.find((user) => user.id === currentUserId)?.id || state.users[0]?.id || "";
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      applyingRemoteState = false;
+      render();
+    });
+  } catch (error) {
+    remoteReady = false;
+    applyingRemoteState = false;
+    console.error("Erro ao carregar Firebase", error);
+  }
 }
 
 function monthKey(date) {
@@ -1340,8 +1407,8 @@ document.body.addEventListener("click", (event) => {
   }
 });
 
-saveState();
 render();
+loadRemoteState();
 let deferredPrompt;
 
 window.addEventListener("beforeinstallprompt", (e) => {
