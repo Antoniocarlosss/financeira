@@ -32,6 +32,7 @@ const seedData = {
     { id: childId, name: "Melissa", birthday: "", role: "filha", salaries: {} },
   ],
   plannedBills: [],
+  incomes: [],
   expenses: [],
   installments: [],
   savings: { casal: 0, filha: 0 },
@@ -83,6 +84,7 @@ function normalizeState(data) {
     users: data.users?.length ? data.users : cloneData(seedData.users),
     people: data.people?.length ? data.people : cloneData(seedData.people),
     plannedBills: data.plannedBills || [],
+    incomes: data.incomes || [],
     cars: data.cars || [],
     mileage: data.mileage || [],
     debts: data.debts || [],
@@ -331,7 +333,13 @@ function salaryForPerson(person, month) {
 }
 
 function monthIncome(month) {
-  return total(state.people.filter((person) => person.role !== "filha").map((person) => ({ amount: salaryForPerson(person, month) })));
+  const salaries = total(state.people.filter((person) => person.role !== "filha").map((person) => ({ amount: salaryForPerson(person, month) })));
+  const received = total((state.incomes || []).filter((income) => monthKey(income.date) === month));
+  return salaries + received;
+}
+
+function incomeForPerson(personId, month) {
+  return total((state.incomes || []).filter((income) => income.personId === personId && monthKey(income.date) === month));
 }
 
 function yearFromMonth(month) {
@@ -546,6 +554,27 @@ function familyBankBalance() {
   return Object.values(state.bankBalances || {}).reduce((sum, value) => sum + normalizeCurrency(value), 0);
 }
 
+function familySavingsTotal() {
+  return normalizeCurrency(state.savings.casal) + normalizeCurrency(state.savings.filha);
+}
+
+function familyEverythingTotal() {
+  return familyBankBalance() + familySavingsTotal();
+}
+
+function balanceKeyForPerson(personId, accountType = "individual") {
+  if (accountType === "casal") return "casal";
+  const person = getPerson(personId);
+  if (!person) return "casal";
+  if (person.role === "filha" || person.name.toLowerCase().includes("melissa")) return "melissa";
+  if (person.name.toLowerCase().includes("juliana")) return "juliana";
+  return "antonio";
+}
+
+function adjustBankBalance(key, amount) {
+  state.bankBalances[key] = normalizeCurrency(state.bankBalances[key]) + normalizeCurrency(amount);
+}
+
 function fuelExpensesForYear(year) {
   return state.expenses.filter((expense) => monthKey(expense.date).startsWith(year) && expense.category === "Combustível");
 }
@@ -596,6 +625,7 @@ function renderPeopleOptions() {
   $("#salaryPerson").innerHTML = options;
   $("#plannedPerson").innerHTML = options;
   $("#fuelPerson").innerHTML = options;
+  $("#dailyEntryPerson").innerHTML = options;
 }
 
 function renderCarOptions() {
@@ -623,6 +653,7 @@ function renderDashboard() {
   $("#childSavings").textContent = money.format(state.savings.filha);
   $("#coupleBankBalance").textContent = money.format(state.bankBalances.casal);
   $("#familyBankBalance").textContent = money.format(familyBankBalance());
+  $("#familyEverything").textContent = money.format(familyEverythingTotal());
   $("#yearFuel").textContent = money.format(total(fuelExpensesForYear(year)));
   $("#monthKm").textContent = `${kmForMonth(selectedMonth).toLocaleString("pt-PT")} km`;
 
@@ -631,14 +662,16 @@ function renderDashboard() {
     const individual = total(personExpenses.filter((expense) => expense.accountType === "individual"));
     const couple = total(personExpenses.filter((expense) => expense.accountType === "casal"));
     const salary = salaryForPerson(person, selectedMonth);
-    const balance = salary - individual;
+    const received = incomeForPerson(person.id, selectedMonth);
+    const totalIncome = salary + received;
+    const balance = totalIncome - individual;
     return `
       <article class="item">
         <div class="item-head">
           <span class="item-title">${person.name}</span>
           <span class="item-value">${money.format(individual + couple)}</span>
         </div>
-        <span class="item-meta">Ordenado recebido: ${money.format(salary)} • Individual: ${money.format(individual)} • Casal: ${money.format(couple)}</span>
+        <span class="item-meta">Recebido: ${money.format(totalIncome)} • Individual: ${money.format(individual)} • Casal: ${money.format(couple)}</span>
         <span class="item-meta">Sobra individual estimada: ${money.format(balance)}</span>
       </article>`;
   }).join("");
@@ -904,7 +937,10 @@ function renderSavings() {
     <article class="metric balance-card"><span>Juliana</span><strong>${money.format(state.bankBalances.juliana)}</strong></article>
     <article class="metric balance-card child"><span>Melissa</span><strong>${money.format(state.bankBalances.melissa)}</strong></article>
     <article class="metric balance-card"><span>Casal</span><strong>${money.format(state.bankBalances.casal)}</strong></article>
-    <article class="metric balance-card family"><span>Familia</span><strong>${money.format(familyBankBalance())}</strong></article>
+    <article class="metric balance-card"><span>Guardado casal</span><strong>${money.format(state.savings.casal)}</strong></article>
+    <article class="metric balance-card child"><span>Guardado Melissa</span><strong>${money.format(state.savings.filha)}</strong></article>
+    <article class="metric balance-card family"><span>Família no banco</span><strong>${money.format(familyBankBalance())}</strong></article>
+    <article class="metric balance-card family"><span>Família com guardado</span><strong>${money.format(familyEverythingTotal())}</strong></article>
   `;
 }
 
@@ -1126,6 +1162,7 @@ $("#nextMonth").addEventListener("click", () => {
 });
 
 $("#expenseDate").valueAsDate = new Date();
+$("#dailyEntryDate").valueAsDate = new Date();
 $("#fuelDate").valueAsDate = new Date();
 $("#installmentStart").valueAsDate = new Date();
 $("#plannedStart").value = selectedMonth;
@@ -1154,15 +1191,58 @@ $("#plannedBillForm").addEventListener("submit", (event) => {
   render();
 });
 
+$("#dailyEntryForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const type = $("#dailyEntryType").value;
+  const amount = normalizeCurrency($("#dailyEntryAmount").value);
+  const personId = $("#dailyEntryPerson").value;
+  const accountType = $("#dailyEntryAccountType").value;
+  const balanceKey = balanceKeyForPerson(personId, accountType);
+
+  if (type === "income") {
+    state.incomes = state.incomes || [];
+    state.incomes.push({
+      id: makeId(),
+      description: $("#dailyEntryDescription").value.trim(),
+      amount,
+      date: $("#dailyEntryDate").value,
+      personId,
+      accountType,
+      category: $("#dailyEntryCategory").value,
+    });
+    adjustBankBalance(balanceKey, amount);
+  } else {
+    state.expenses.push({
+      id: makeId(),
+      description: $("#dailyEntryDescription").value.trim(),
+      amount,
+      date: $("#dailyEntryDate").value,
+      personId,
+      accountType,
+      category: $("#dailyEntryCategory").value,
+      carId: "",
+      recurring: false,
+    });
+    adjustBankBalance(balanceKey, -amount);
+  }
+
+  saveState();
+  event.target.reset();
+  $("#dailyEntryDate").valueAsDate = new Date();
+  render();
+});
+
 $("#expenseForm").addEventListener("submit", (event) => {
   event.preventDefault();
+  const personId = $("#expensePerson").value;
+  const accountType = $("#expenseAccountType").value;
   state.expenses.push({
     id: makeId(),
     description: $("#expenseDescription").value.trim(),
     amount: normalizeCurrency($("#expenseAmount").value),
     date: $("#expenseDate").value,
-    personId: $("#expensePerson").value,
-    accountType: $("#expenseAccountType").value,
+    personId,
+    accountType,
     category: $("#expenseCategory").value,
     carId: $("#expenseCar").value,
     recurring: false,
@@ -1237,17 +1317,21 @@ $("#mileageForm").addEventListener("submit", (event) => {
 $("#fuelForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const car = getCar($("#fuelCar").value);
+  const personId = $("#fuelPerson").value;
+  const accountType = $("#fuelAccountType").value;
+  const amount = normalizeCurrency($("#fuelAmount").value);
   state.expenses.push({
     id: makeId(),
     description: $("#fuelDescription").value.trim() || `Abastecimento - ${car?.name || "Carro"}`,
-    amount: normalizeCurrency($("#fuelAmount").value),
+    amount,
     date: $("#fuelDate").value,
-    personId: $("#fuelPerson").value,
-    accountType: $("#fuelAccountType").value,
+    personId,
+    accountType,
     category: "Combustível",
     carId: $("#fuelCar").value,
     recurring: false,
   });
+  adjustBankBalance(balanceKeyForPerson(personId, accountType), -amount);
   saveState();
   event.target.reset();
   $("#fuelDate").valueAsDate = new Date();
@@ -1260,9 +1344,43 @@ $("#savingsForm").addEventListener("submit", (event) => {
   state.bankBalances.juliana = normalizeCurrency($("#bankJuliana").value);
   state.bankBalances.melissa = normalizeCurrency($("#bankMelissa").value);
   state.bankBalances.casal = normalizeCurrency($("#bankCasal").value);
-  state.savings.casal = state.bankBalances.casal;
-  state.savings.filha = state.bankBalances.melissa;
   saveState();
+  render();
+});
+
+$("#savingsMoveForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const target = $("#savingsTarget").value;
+  const movement = $("#savingsMoveType").value;
+  const amount = normalizeCurrency($("#savingsMoveAmount").value);
+  const bankKey = target === "filha" ? "melissa" : "casal";
+  const savingKey = target === "filha" ? "filha" : "casal";
+
+  if (movement === "deposit") {
+    adjustBankBalance(bankKey, -amount);
+    state.savings[savingKey] = normalizeCurrency(state.savings[savingKey]) + amount;
+  } else {
+    state.savings[savingKey] = Math.max(0, normalizeCurrency(state.savings[savingKey]) - amount);
+    adjustBankBalance(bankKey, amount);
+  }
+
+  state.expenses.push({
+    id: makeId(),
+    description: $("#savingsMoveDescription").value.trim() || (movement === "deposit" ? "Dinheiro guardado" : "Retirada do guardado"),
+    amount: 0,
+    date: new Date().toISOString().slice(0, 10),
+    personId: state.people.find((person) => target === "filha" ? person.role === "filha" : person.role !== "filha")?.id || state.people[0]?.id,
+    accountType: target === "filha" ? "individual" : "casal",
+    category: movement === "deposit" ? "Guardado" : "Retirada",
+    recurring: false,
+    savingsMovement: true,
+    savingsAmount: amount,
+    savingsTarget: target,
+    savingsType: movement,
+  });
+
+  saveState();
+  event.target.reset();
   render();
 });
 
@@ -1284,7 +1402,11 @@ $("#salaryForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const person = getPerson($("#salaryPerson").value);
   person.salaries = person.salaries || {};
-  person.salaries[$("#salaryMonth").value] = normalizeCurrency($("#salaryAmount").value);
+  const month = $("#salaryMonth").value;
+  const previousAmount = normalizeCurrency(person.salaries[month]);
+  const nextAmount = normalizeCurrency($("#salaryAmount").value);
+  person.salaries[month] = nextAmount;
+  adjustBankBalance(balanceKeyForPerson(person.id, "individual"), nextAmount - previousAmount);
   saveState();
   event.target.reset();
   render();

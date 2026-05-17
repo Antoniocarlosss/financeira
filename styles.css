@@ -308,6 +308,21 @@ nav {
   font-size: 1.05rem;
 }
 
+.quick-entry-panel {
+  margin-bottom: 18px;
+}
+
+.quick-entry-form {
+  display: grid;
+  grid-template-columns: 120px minmax(180px, 1.3fr) minmax(110px, 0.7fr) minmax(150px, 0.9fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.quick-entry-form button {
+  min-height: 42px;
+}
+
 .list {
   display: grid;
   gap: 10px;
@@ -695,6 +710,10 @@ nav {
   }
 
   .inline-form {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-entry-form {
     grid-template-columns: 1fr;
   }
 

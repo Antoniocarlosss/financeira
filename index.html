@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Financeira" />
-    <link rel="stylesheet" href="styles.css?v=20" />
+    <link rel="stylesheet" href="styles.css?v=21" />
   </head>
   <body>
     <main id="loginScreen" class="login-shell">
@@ -76,6 +76,37 @@
         </header>
 
         <section id="dashboardView" class="view active-view">
+          <section class="panel quick-entry-panel">
+            <div class="panel-title">
+              <h2>Lançamento rápido do dia</h2>
+            </div>
+            <form id="dailyEntryForm" class="quick-entry-form">
+              <label>Tipo<select id="dailyEntryType" required>
+                <option value="expense">Gasto</option>
+                <option value="income">Recebido</option>
+              </select></label>
+              <label>Descrição<input id="dailyEntryDescription" required placeholder="Ex: café, mercado, ordenado extra" /></label>
+              <label>Valor<input id="dailyEntryAmount" type="number" min="0" step="0.01" required /></label>
+              <label>Data<input id="dailyEntryDate" type="date" required /></label>
+              <label>Pessoa<select id="dailyEntryPerson" required></select></label>
+              <label>Conta<select id="dailyEntryAccountType" required>
+                <option value="individual">Individual</option>
+                <option value="casal">Conta do casal</option>
+              </select></label>
+              <label>Categoria<select id="dailyEntryCategory">
+                <option>Outros</option>
+                <option>Mercado</option>
+                <option>Café</option>
+                <option>Combustível</option>
+                <option>Casa</option>
+                <option>Saúde</option>
+                <option>Filha</option>
+                <option>Ordenado</option>
+              </select></label>
+              <button class="primary" type="submit">Salvar lançamento</button>
+            </form>
+          </section>
+
           <div class="summary-grid">
             <article class="metric">
               <span>Gastos do mês</span>
@@ -108,6 +139,10 @@
             <article class="metric family">
               <span>Saldo da família</span>
               <strong id="familyBankBalance">0,00 &euro;</strong>
+            </article>
+            <article class="metric family">
+              <span>Tudo junto da família</span>
+              <strong id="familyEverything">0,00 &euro;</strong>
             </article>
             <article class="metric">
               <span>Combustível no ano (todos)</span>
@@ -301,6 +336,21 @@
               <button class="primary" type="submit">Salvar saldos</button>
             </form>
 
+            <form id="savingsMoveForm" class="panel form-grid">
+              <h2>Movimento do guardado</h2>
+              <label>Destino<select id="savingsTarget" required>
+                <option value="casal">Guardado do casal</option>
+                <option value="filha">Guardado da Melissa</option>
+              </select></label>
+              <label>Movimento<select id="savingsMoveType" required>
+                <option value="deposit">Guardar dinheiro</option>
+                <option value="withdraw">Retirar do guardado</option>
+              </select></label>
+              <label>Valor<input id="savingsMoveAmount" type="number" min="0" step="0.01" required /></label>
+              <label>Descrição<input id="savingsMoveDescription" placeholder="Ex: poupança do mês, retirada" /></label>
+              <button class="primary" type="submit">Salvar movimento</button>
+            </form>
+
             <section class="panel balance-panel">
               <div class="panel-title">
                 <h2>Visão da família</h2>
@@ -406,7 +456,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-    <script src="app.js?v=20"></script>
+    <script src="app.js?v=21"></script>
     <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
