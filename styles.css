@@ -369,6 +369,36 @@ nav {
   flex-wrap: wrap;
 }
 
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  margin-left: 6px;
+}
+
+.status-pill.paid {
+  background: #eef7f2;
+  color: var(--primary-dark);
+}
+
+.status-pill.open,
+.unpaid-installment {
+  background: #fffaf4;
+}
+
+.status-pill.open {
+  color: #8a4c13;
+}
+
+.mini-btn {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 0.82rem;
+}
+
 .progress-track {
   width: 100%;
   height: 12px;
@@ -415,10 +445,15 @@ nav {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  align-items: center;
   padding: 8px 10px;
   border-radius: 6px;
   border: 1px solid var(--line);
   list-style: none;
+}
+
+.payment-columns li span {
+  flex: 1;
 }
 
 .payment-columns li.paid {

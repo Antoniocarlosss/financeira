@@ -71,6 +71,10 @@ function loadState() {
       payments: {},
       ...bill,
     }));
+    merged.installments = (merged.installments || []).map((installment) => ({
+      payments: {},
+      ...installment,
+    }));
     ensurePersonalPeople(merged);
     return merged;
   } catch {
@@ -168,16 +172,28 @@ function defaultPaidUntil() {
 
 function installmentPaidCount(installment) {
   const months = installmentMonths(installment);
-  if (installment.paidUntil) {
-    return months.filter((month) => installmentChargeDate(installment, month) <= installment.paidUntil).length;
+  return months.filter((month) => installmentIsPaid(installment, month)).length;
+}
+
+function installmentIsPaid(installment, month) {
+  if (installment.payments && Object.prototype.hasOwnProperty.call(installment.payments, month)) {
+    return Boolean(installment.payments[month]);
   }
-  return months.filter((month) => month < selectedMonth).length;
+  if (installment.paidUntil) {
+    return installmentChargeDate(installment, month) <= installment.paidUntil;
+  }
+  return month < selectedMonth;
+}
+
+function setInstallmentPayment(installment, month, paid) {
+  installment.payments = installment.payments || {};
+  installment.payments[month] = paid;
 }
 
 function installmentPaymentRows(installment) {
   return installmentMonths(installment).map((month, index) => {
     const date = installmentChargeDate(installment, month);
-    const paid = installment.paidUntil ? date <= installment.paidUntil : month < selectedMonth;
+    const paid = installmentIsPaid(installment, month);
     return { number: index + 1, month, date, paid };
   });
 }
@@ -190,6 +206,32 @@ function monthsBetweenInclusive(startMonth, endMonth) {
 
 function installmentOccursInMonth(installment, month) {
   return installmentMonths(installment).includes(month);
+}
+
+function installmentExpenseForMonth(installment, month) {
+  const months = installmentMonths(installment);
+  const index = months.indexOf(month);
+  if (index === -1) return null;
+  return {
+    id: `${installment.id}-${month}`,
+    description: `${installment.description} (${index + 1}/${installment.total})`,
+    amount: installment.amount,
+    date: installmentChargeDate(installment, month),
+    personId: installment.personId,
+    accountType: installment.accountType,
+    category: "Parcelada",
+    recurring: false,
+    installmentId: installment.id,
+    installmentMonth: month,
+    installmentPaid: installmentIsPaid(installment, month),
+  };
+}
+
+function installmentExpensesForMonth(month, options = {}) {
+  return state.installments
+    .filter((installment) => installmentOccursInMonth(installment, month))
+    .map((installment) => installmentExpenseForMonth(installment, month))
+    .filter((expense) => expense && (options.includeUnpaid || expense.installmentPaid));
 }
 
 function debtExpensesForMonth(month) {
@@ -210,19 +252,7 @@ function debtExpensesForMonth(month) {
 
 function getMonthExpenses(month, options = {}) {
   const direct = state.expenses.filter((expense) => expenseOccursInMonth(expense, month));
-  const installments = state.installments
-    .filter((installment) => installmentOccursInMonth(installment, month))
-    .map((installment) => ({
-      id: `${installment.id}-${month}`,
-      description: `${installment.description} (${installmentMonths(installment).indexOf(month) + 1}/${installment.total})`,
-      amount: installment.amount,
-      date: installmentChargeDate(installment, month),
-      personId: installment.personId,
-      accountType: installment.accountType,
-      category: "Parcelada",
-      recurring: false,
-      installmentId: installment.id,
-    }));
+  const installments = installmentExpensesForMonth(month, { includeUnpaid: options.includeUnpaidInstallments });
   const debts = options.withoutDebts ? [] : debtExpensesForMonth(month);
 
   return [...debts, ...direct, ...installments].sort((a, b) => a.date.localeCompare(b.date));
@@ -310,7 +340,7 @@ function renderCarOptions() {
 function renderDashboard() {
   const monthExpenses = getMonthExpenses(selectedMonth);
   const nextMonth = addMonths(selectedMonth, 1);
-  const nextExpenses = getMonthExpenses(nextMonth);
+  const nextExpenses = getMonthExpenses(nextMonth, { includeUnpaidInstallments: true });
   const nextPlanned = getPlannedBillsForMonth(nextMonth);
   const monthPlannedDue = upcomingPlannedBills(selectedMonth).slice(0, 5);
   const income = monthIncome(selectedMonth);
@@ -398,21 +428,38 @@ function renderPlannedBills() {
 }
 
 function renderExpenses() {
-  const rows = getMonthExpenses(selectedMonth).map((expense) => {
+  const paidExpenseRows = getMonthExpenses(selectedMonth).map((expense) => {
     const isAutomatic = Boolean(expense.installmentId || expense.debtId);
-    const car = expense.carId ? ` • ${getCar(expense.carId)?.name || "Carro"}` : "";
+    const car = expense.carId ? ` â€¢ ${getCar(expense.carId)?.name || "Carro"}` : "";
+    const installmentActions = expense.installmentId ? `
+          <button class="ghost" type="button" data-set-installment-payment="${expense.installmentId}" data-payment-month="${selectedMonth}" data-payment-status="false">Marcar em falta</button>` : "";
     return `
       <article class="item">
         <div class="item-head">
           <span class="item-title">${expense.description}</span>
           <span class="item-value">${money.format(expense.amount)}</span>
         </div>
-        <span class="item-meta">${new Date(`${expense.date}T12:00:00`).toLocaleDateString("pt-PT")} • ${getPerson(expense.personId)?.name || "Sem pessoa"} • ${expense.accountType === "casal" ? "Conta do casal" : "Individual"} • ${expense.category}${car}</span>
-        ${isAutomatic ? "<span class=\"item-meta\">Gerada automaticamente.</span>" : `<div class="item-actions"><button class="danger" type="button" data-delete-expense="${expense.id}">Excluir</button></div>`}
+        <span class="item-meta">${new Date(`${expense.date}T12:00:00`).toLocaleDateString("pt-PT")} â€¢ ${getPerson(expense.personId)?.name || "Sem pessoa"} â€¢ ${expense.accountType === "casal" ? "Conta do casal" : "Individual"} â€¢ ${expense.category}${car}</span>
+        ${isAutomatic ? `<span class="item-meta">Gerada automaticamente. <strong class="status-pill paid">Pago</strong></span><div class="item-actions">${installmentActions}</div>` : `<div class="item-actions"><button class="danger" type="button" data-delete-expense="${expense.id}">Excluir</button></div>`}
       </article>`;
   }).join("");
+  const unpaidInstallmentRows = installmentExpensesForMonth(selectedMonth, { includeUnpaid: true })
+    .filter((expense) => !expense.installmentPaid)
+    .map((expense) => `
+      <article class="item unpaid-installment">
+        <div class="item-head">
+          <span class="item-title">${expense.description}</span>
+          <span class="item-value">${money.format(expense.amount)}</span>
+        </div>
+        <span class="item-meta">${new Date(`${expense.date}T12:00:00`).toLocaleDateString("pt-PT")} â€¢ ${getPerson(expense.personId)?.name || "Sem pessoa"} â€¢ ${expense.accountType === "casal" ? "Conta do casal" : "Individual"} â€¢ ${expense.category}</span>
+        <span class="item-meta">Parcela do mÃªs ainda nÃ£o paga. <strong class="status-pill open">Em falta</strong></span>
+        <div class="item-actions">
+          <button class="primary" type="button" data-set-installment-payment="${expense.installmentId}" data-payment-month="${selectedMonth}" data-payment-status="true">Marcar paga</button>
+        </div>
+      </article>`).join("");
+  const rows = paidExpenseRows + unpaidInstallmentRows;
 
-  $("#expensesList").innerHTML = rows || empty("Nenhum gasto lançado neste mês.");
+  $("#expensesList").innerHTML = rows || empty("Nenhum gasto lanÃ§ado neste mÃªs.");
 }
 
 function renderInstallments() {
@@ -423,7 +470,7 @@ function renderInstallments() {
     const remaining = Math.max(installment.total - paidCount, 0);
     const lastMonth = months[months.length - 1];
     const nextMonth = months[currentIndex] || lastMonth;
-    const remainingTime = remaining > 0 ? `${remaining} mês(es)` : "finalizado";
+    const remainingTime = remaining > 0 ? `${remaining} mÃªs(es)` : "finalizado";
     const remainingAmount = remaining * installment.amount;
     const initialAmount = installment.total * installment.amount;
     const paidAmount = paidCount * installment.amount;
@@ -431,31 +478,33 @@ function renderInstallments() {
     const remainingPercent = Math.max(0, 100 - paidPercent);
     const allPaymentRows = installmentPaymentRows(installment);
     const paidRows = allPaymentRows.filter((row) => row.paid).map((row) => `
-      <li class="${row.paid ? "paid" : "open"}">
-        <span>${row.number}/${installment.total} • ${new Date(`${row.date}T12:00:00`).toLocaleDateString("pt-PT")}</span>
-        <strong>${row.paid ? "Pago" : money.format(installment.amount)}</strong>
+      <li class="paid">
+        <span>${row.number}/${installment.total} â€¢ ${new Date(`${row.date}T12:00:00`).toLocaleDateString("pt-PT")}</span>
+        <strong>Pago</strong>
+        <button class="ghost mini-btn" type="button" data-set-installment-payment="${installment.id}" data-payment-month="${row.month}" data-payment-status="false">Em falta</button>
       </li>`).join("");
     const openRows = allPaymentRows.filter((row) => !row.paid).map((row) => `
       <li class="open">
-        <span>${row.number}/${installment.total} • ${new Date(`${row.date}T12:00:00`).toLocaleDateString("pt-PT")}</span>
+        <span>${row.number}/${installment.total} â€¢ ${new Date(`${row.date}T12:00:00`).toLocaleDateString("pt-PT")}</span>
         <strong>${money.format(installment.amount)}</strong>
+        <button class="primary mini-btn" type="button" data-set-installment-payment="${installment.id}" data-payment-month="${row.month}" data-payment-status="true">Paga</button>
       </li>`).join("");
     return `
       <details class="item installment-card">
         <summary>
           <span class="item-title">${installment.description}</span>
-          <span class="item-value">${money.format(installment.amount)}/mês</span>
+          <span class="item-value">${money.format(installment.amount)}/mÃªs</span>
         </summary>
-        <span class="item-meta">${getPerson(installment.personId)?.name || "Sem pessoa"} • ${installment.accountType === "casal" ? "Conta do casal" : "Individual"}</span>
-        <span class="item-meta">Vai de ${new Date(`${installment.startDate || `${installment.startMonth}-01`}T12:00:00`).toLocaleDateString("pt-PT")} até ${formatMonth(lastMonth)} • ${installment.total} parcela(s).</span>
-        <span class="item-meta">Valor inicial devido: ${money.format(initialAmount)} • Pago: ${money.format(paidAmount)} • Falta: ${money.format(remainingAmount)}</span>
+        <span class="item-meta">${getPerson(installment.personId)?.name || "Sem pessoa"} â€¢ ${installment.accountType === "casal" ? "Conta do casal" : "Individual"}</span>
+        <span class="item-meta">Vai de ${new Date(`${installment.startDate || `${installment.startMonth}-01`}T12:00:00`).toLocaleDateString("pt-PT")} atÃ© ${formatMonth(lastMonth)} â€¢ ${installment.total} parcela(s).</span>
+        <span class="item-meta">Valor inicial devido: ${money.format(initialAmount)} â€¢ Pago: ${money.format(paidAmount)} â€¢ Falta: ${money.format(remainingAmount)}</span>
         <div class="progress-track" aria-label="Progresso pago">
           <span style="width: ${paidPercent}%"></span>
         </div>
-        <span class="item-meta">${paidPercent.toFixed(1)}% pago • ${remainingPercent.toFixed(1)}% falta • ${remainingTime} para acabar.</span>
+        <span class="item-meta">${paidPercent.toFixed(1)}% pago â€¢ ${remainingPercent.toFixed(1)}% falta â€¢ ${remainingTime} para acabar.</span>
         <div class="inline-form">
-          <label>Pago até<input type="date" data-paid-until-input="${installment.id}" value="${installment.paidUntil || defaultPaidUntil()}" /></label>
-          <button class="ghost" type="button" data-save-paid-until="${installment.id}">Salvar pago até</button>
+          <label>Pago atÃ©<input type="date" data-paid-until-input="${installment.id}" value="${installment.paidUntil || defaultPaidUntil()}" /></label>
+          <button class="ghost" type="button" data-save-paid-until="${installment.id}">Salvar pago atÃ©</button>
         </div>
         <div class="payment-columns">
           <section>
@@ -467,7 +516,7 @@ function renderInstallments() {
             <ul>${openRows || "<li class=\"paid\"><span>Tudo quitado.</span><strong>Pago</strong></li>"}</ul>
           </section>
         </div>
-        <span class="item-meta">Próxima cobrança: ${formatMonth(nextMonth)}.</span>
+        <span class="item-meta">PrÃ³xima cobranÃ§a: ${formatMonth(nextMonth)}.</span>
         <div class="item-actions"><button class="danger" type="button" data-delete-installment="${installment.id}">Excluir parcelamento</button></div>
       </details>`;
   }).join("");
@@ -555,7 +604,7 @@ function createReport(month) {
     debtIncoming: total(debtExpensesForMonth(month)),
     coupleSavings: state.savings.casal,
     childSavings: state.savings.filha,
-    nextMonthNeeded: total(getMonthExpenses(addMonths(month, 1))) + total(getPlannedBillsForMonth(addMonths(month, 1))),
+    nextMonthNeeded: total(getMonthExpenses(addMonths(month, 1), { includeUnpaidInstallments: true })) + total(getPlannedBillsForMonth(addMonths(month, 1))),
     fuelYearTotal: total(fuelExpensesForYear(year)),
     fuelMonthTotal: total(expensesWithoutDebts.filter((expense) => expense.category === "Combustível")),
     monthKm: kmForMonth(month),
@@ -732,6 +781,7 @@ $("#installmentForm").addEventListener("submit", (event) => {
     startDate,
     personId: $("#installmentPerson").value,
     accountType: $("#installmentAccountType").value,
+    payments: {},
   });
   saveState();
   event.target.reset();
@@ -860,6 +910,7 @@ document.body.addEventListener("click", (event) => {
   const carId = event.target.dataset.deleteCar;
   const userId = event.target.dataset.deleteUser;
   const savePaidUntilId = event.target.dataset.savePaidUntil;
+  const setInstallmentPaymentId = event.target.dataset.setInstallmentPayment;
   const payPlannedId = event.target.dataset.payPlanned;
   const deletePlannedId = event.target.dataset.deletePlanned;
 
@@ -918,6 +969,17 @@ document.body.addEventListener("click", (event) => {
     const installment = state.installments.find((item) => item.id === savePaidUntilId);
     const input = document.querySelector(`[data-paid-until-input="${savePaidUntilId}"]`);
     installment.paidUntil = input.value;
+    installmentPaymentRows(installment).forEach((row) => {
+      setInstallmentPayment(installment, row.month, row.date <= installment.paidUntil);
+    });
+    saveState();
+    render();
+  }
+
+  if (setInstallmentPaymentId) {
+    const installment = state.installments.find((item) => item.id === setInstallmentPaymentId);
+    if (!installment) return;
+    setInstallmentPayment(installment, event.target.dataset.paymentMonth, event.target.dataset.paymentStatus === "true");
     saveState();
     render();
   }
